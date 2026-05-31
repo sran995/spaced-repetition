@@ -403,14 +403,21 @@ body{
   <!-- Module View -->
   <div id="moduleView" class="hidden">
     <button class="back-btn" onclick="switchView('review')">&larr; 返回</button>
-    <div class="module-header">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <h3 id="moduleTitle" style="font-size:18px;cursor:pointer;" onclick="renameModule()" title="点击修改名称"></h3>
-        <span style="font-size:12px;color:var(--red);cursor:pointer;font-weight:600;" onclick="deleteModule()">删除</span>
+    <div class="module-split">
+      <div class="module-list-panel">
+        <div class="module-header">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <h3 id="moduleTitle" style="font-size:18px;cursor:pointer;" onclick="renameModule()" title="点击修改名称"></h3>
+            <span style="font-size:12px;color:var(--red);cursor:pointer;font-weight:600;" onclick="deleteModule()">删除</span>
+          </div>
+          <button class="btn-primary" style="width:auto;margin:0;padding:8px 18px;font-size:14px;" onclick="showAddItem()">+ 新建</button>
+        </div>
+        <div class="list" id="moduleItemList"></div>
       </div>
-      <button class="btn-primary" style="width:auto;margin:0;padding:8px 18px;font-size:14px;" onclick="showAddItem()">+ 新建</button>
+      <div class="module-edit-panel" id="moduleEditPanel">
+        <!-- Edit form slides in here -->
+      </div>
     </div>
-    <div class="list" id="moduleItemList"></div>
   </div>
 
   <!-- Answer View -->
@@ -419,7 +426,7 @@ body{
     <div class="answer-screen" id="answerContent"></div>
   </div>
 
-  <!-- Add Item View -->
+  <!-- Add Item View (kept for mobile/new-item flow) -->
   <div id="addItemView" class="hidden">
     <button class="back-btn" onclick="backFromAdd()">&larr; 返回</button>
     <div class="form-card">
@@ -794,21 +801,45 @@ function editItem(id) {
   const item = allItems.find(i => i.id === id);
   if (!item) return;
   editingItemId = id;
-  // Manually show add form + keep module visible (don't use switchView which hides module)
-  document.getElementById('reviewView').classList.add('hidden');
-  document.getElementById('answerView').classList.add('hidden');
-  document.getElementById('settingsView').classList.add('hidden');
-  document.getElementById('addItemView').classList.remove('hidden');
-  document.getElementById('addMode').value = item.mode === '概念理解' ? '概念理解' : '精确记忆';
-  document.getElementById('addTitle').value = item.title;
-  document.getElementById('addDefinition').value = item.definition || '';
+  const panel = document.getElementById('moduleEditPanel');
   const isEnglishModule = item.module === '英语' || item.module === '英文';
-  document.getElementById('addEngSection').classList.toggle('hidden', !isEnglishModule);
-  document.getElementById('addEngMeaning').value = item.engMeaning || '';
-  document.getElementById('addTitleLabel').textContent = isEnglishModule ? '单词 / 句子' : '标题';
-  // Change save button
-  const saveBtn = document.querySelector('#addItemView .btn-primary');
-  if (saveBtn) saveBtn.textContent = '更新';
+  panel.innerHTML = `
+    <div class="form-card">
+      <h3 style="margin-bottom:14px;">修改条目</h3>
+      <label>模式</label>
+      <select id="editMode"><option value="概念理解" ${item.mode==='概念理解'?'selected':''}>概念理解</option><option value="精确记忆" ${item.mode==='精确记忆'?'selected':''}>精确记忆</option></select>
+      <label>${isEnglishModule ? '单词 / 句子' : '标题'}</label>
+      <input type="text" id="editTitle" value="${escAttr(item.title)}">
+      <label>定义 / 正确答案</label>
+      <textarea id="editDef" rows="3">${escAttr(item.definition||'')}</textarea>
+      ${isEnglishModule ? `<label>中文释义</label><input type="text" id="editEngMeaning" value="${escAttr(item.engMeaning||'')}">` : ''}
+      <button class="btn-primary" onclick="saveEdit()" style="margin-top:14px;width:100%;">保存修改</button>
+      <button class="btn-primary" onclick="cancelEdit()" style="margin-top:8px;width:100%;background:var(--bg);color:var(--dark);box-shadow:0 4px 0 #ddd;">取消</button>
+    </div>
+  `;
+  panel.classList.add('show');
+}
+
+function escAttr(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function saveEdit() {
+  if (!editingItemId) return;
+  const idx = allItems.findIndex(i => i.id === editingItemId);
+  if (idx < 0) return;
+  allItems[idx].title = document.getElementById('editTitle').value.trim();
+  allItems[idx].definition = document.getElementById('editDef').value.trim();
+  allItems[idx].mode = document.getElementById('editMode').value;
+  const engEl = document.getElementById('editEngMeaning');
+  if (engEl) allItems[idx].engMeaning = engEl.value.trim();
+  saveItems();
+  editingItemId = null;
+  document.getElementById('moduleEditPanel').classList.remove('show');
+  renderModuleItems();
+}
+
+function cancelEdit() {
+  editingItemId = null;
+  document.getElementById('moduleEditPanel').classList.remove('show');
 }
 
 function backFromAdd() {
