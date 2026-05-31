@@ -165,15 +165,6 @@ body{
   background:rgba(99,102,241,.06);
 }
 .header .user-info:hover{background:rgba(99,102,241,.12);}
-.user-dropdown{
-  position:absolute;top:100%;right:0;background:var(--white);border-radius:var(--btn-radius);
-  padding:6px;min-width:130px;display:none;z-index:50;
-  box-shadow:0 8px 0 rgba(99,102,241,.1),0 16px 32px rgba(99,102,241,.08);
-}
-.user-dropdown.show{display:block;}
-.user-dropdown div{padding:10px 14px;border-radius:12px;font-size:13px;cursor:pointer;font-weight:600;}
-.user-dropdown div:hover{background:rgba(99,102,241,.06);}
-.user-dropdown .logout-item{color:var(--coral);}
 
 /* ── Navigation ── */
 .nav{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;}
@@ -368,13 +359,7 @@ body{
   <!-- Sidebar -->
   <div class="sidebar">
     <h2>今天，你复习了吗？</h2>
-    <span class="user-row" id="userMenu" onclick="toggleUserMenu()">
-      <span id="currentUserLabel"></span>
-      <div class="user-dropdown" id="userDropdown">
-        <div onclick="switchView('settings')">设置</div>
-        <div class="logout-item" onclick="logout()">退出</div>
-      </div>
-    </span>
+    <span class="user-row" id="currentUserLabel"></span>
     <div class="section-label">导航</div>
     <div id="navBar">
       <span class="nav-item active" data-view="review" onclick="switchView('review')">今日复习</span>
@@ -646,17 +631,6 @@ function deleteCurrentAccount() {
   logout();
 }
 
-function toggleUserMenu() {
-  const dd = document.getElementById('userDropdown');
-  dd.classList.toggle('show');
-}
-
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('#userMenu')) {
-    document.getElementById('userDropdown').classList.remove('show');
-  }
-});
-
 function logout() {
   currentAccount = null;
   currentModule = null;
@@ -762,7 +736,6 @@ function openModule(name) {
 
 function switchView(view) {
   currentView = view;
-  document.getElementById('userDropdown').classList.remove('show');
   document.getElementById('reviewView').classList.toggle('hidden', view !== 'review');
   document.getElementById('moduleView').classList.toggle('hidden', view !== 'module');
   document.getElementById('addItemView').classList.toggle('hidden', view !== 'add');
