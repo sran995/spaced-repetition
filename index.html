@@ -28,7 +28,7 @@ body{
   position:sticky;top:0;height:100dvh;overflow-y:auto;z-index:10;
 }
 .greeting{padding:0 8px 16px;}
-.greeting .greeting-user{font-size:14px;font-weight:700;color:var(--muted);display:block;margin-bottom:2px;letter-spacing:-.2px;}
+.greeting .greeting-user{font-size:15px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px;letter-spacing:-.2px;}
 .greeting h2{font-size:16px;font-weight:800;letter-spacing:-.3px;margin:0;}
 .sidebar .section-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 8px 6px;font-weight:700;}
 .sidebar .nav-item{
@@ -590,7 +590,7 @@ function verifyPIN() {
   currentAccount = selectedAccount;
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('mainScreen').classList.remove('hidden');
-  document.getElementById('currentUserLabel').textContent = selectedAccount + '，';
+  document.getElementById('currentUserLabel').textContent = 'Hi ' + selectedAccount;
   selectedAccount = null;
   pinInput = '';
   loadMainData();
