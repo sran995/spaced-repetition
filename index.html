@@ -27,12 +27,9 @@ body{
   box-shadow:0 8px 0 rgba(99,102,241,.08),0 16px 32px rgba(99,102,241,.04);
   position:sticky;top:0;height:100dvh;overflow-y:auto;z-index:10;
 }
-.sidebar h2{font-size:16px;font-weight:800;margin-bottom:20px;padding:0 8px;letter-spacing:-.3px;}
-.sidebar .user-row{
-  padding:8px;margin-bottom:16px;cursor:pointer;font-size:13px;font-weight:600;
-  color:var(--purple);border-radius:var(--btn-radius);position:relative;
-}
-.sidebar .user-row:hover{background:rgba(99,102,241,.06);}
+.greeting{padding:0 8px 16px;}
+.greeting .greeting-user{font-size:14px;font-weight:700;color:var(--muted);display:block;margin-bottom:2px;letter-spacing:-.2px;}
+.greeting h2{font-size:16px;font-weight:800;letter-spacing:-.3px;margin:0;}
 .sidebar .section-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 8px 6px;font-weight:700;}
 .sidebar .nav-item{
   display:block;width:100%;text-align:left;padding:10px 12px;border-radius:var(--btn-radius);
@@ -321,7 +318,9 @@ body{
   .sidebar h2{font-size:14px;margin:0 8px 0 0;padding:0;}
   .sidebar .section-label{display:none;}
   .sidebar .nav-item{width:auto;font-size:12px;padding:6px 12px;}
-  .sidebar .user-row{margin:0;padding:4px 8px;font-size:12px;}
+  .greeting{padding:0 4px 8px;}
+  .greeting .greeting-user{font-size:12px;}
+  .greeting h2{font-size:14px;}
   .sidebar .settings-btn{margin:0;}
   .sidebar .nav-item.add-module{font-size:16px;padding:4px 10px;}
   .main-content{padding:16px;max-height:none;}
@@ -369,8 +368,10 @@ body{
 <div id="mainScreen" class="hidden">
   <!-- Sidebar -->
   <div class="sidebar">
-    <h2>今天，你复习了吗？</h2>
-    <span class="user-row" id="currentUserLabel"></span>
+    <div class="greeting">
+      <span class="greeting-user" id="currentUserLabel"></span>
+      <h2>今天，你复习了吗？</h2>
+    </div>
     <div class="section-label">导航</div>
     <div id="navBar">
       <span class="nav-item active" data-view="review" onclick="switchView('review')">今日复习</span>
@@ -589,7 +590,7 @@ function verifyPIN() {
   currentAccount = selectedAccount;
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('mainScreen').classList.remove('hidden');
-  document.getElementById('currentUserLabel').textContent = selectedAccount;
+  document.getElementById('currentUserLabel').textContent = selectedAccount + '，';
   selectedAccount = null;
   pinInput = '';
   loadMainData();
