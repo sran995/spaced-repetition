@@ -683,8 +683,12 @@ function buildNav() {
   let html = '';
   modules.forEach((m, i) => {
     html += `<span class="nav-item" draggable="true" data-view="module" data-module="${m.name}" data-idx="${i}"
-      onclick="openModule('${m.name}')"
-      oncontextmenu="showModuleMenu(event,'${m.name}')"
+      onclick="if(!longPressTriggered)openModule('${m.name}')"
+      onmousedown="startLongPress(event,'${m.name}')"
+      onmouseup="cancelLongPress()"
+      onmouseleave="cancelLongPress()"
+      ontouchstart="startLongPress(event,'${m.name}')"
+      ontouchend="cancelLongPress()"
       ondragstart="handleDragStart(event,${i})"
       ondragover="handleDragOver(event)"
       ondragleave="handleDragLeave(event)"
@@ -713,8 +717,29 @@ function handleDrop(e, toIdx) {
 }
 function handleDragEnd(e) { e.target.classList.remove('dragging'); dragIdx = null; }
 
-// Context menu for modules
+// Long-press for module menu
 let ctxModuleName = null;
+let longPressTimer = null;
+let longPressTriggered = false;
+
+function startLongPress(e, moduleName) {
+  longPressTriggered = false;
+  longPressTimer = setTimeout(() => {
+    longPressTriggered = true;
+    ctxModuleName = moduleName;
+    const menu = document.getElementById('moduleContextMenu');
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    menu.classList.add('show');
+  }, 600);
+}
+
+function cancelLongPress() {
+  clearTimeout(longPressTimer);
+}
+
 function showModuleMenu(e, moduleName) {
   e.preventDefault();
   ctxModuleName = moduleName;
