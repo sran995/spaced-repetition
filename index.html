@@ -42,6 +42,10 @@ body{
 .sidebar .nav-item:hover{background:rgba(99,102,241,.06);}
 .sidebar .nav-item.active{background:var(--purple);color:#fff;}
 .sidebar .nav-item.add-module{color:var(--muted);font-size:18px;padding:6px 12px;font-weight:400;}
+.module-nav-item{display:flex;justify-content:space-between;align-items:center;}
+.module-dots{font-size:14px;color:var(--muted);padding:0 2px;opacity:0;transition:opacity .15s;}
+.module-nav-item:hover .module-dots{opacity:1;}
+.module-dots:hover{color:var(--purple);}
 .sidebar .nav-item.dragging{opacity:.4;background:rgba(99,102,241,.1);}
 .sidebar .nav-item.drag-over{border-top:2px solid var(--purple);}
 .context-menu{position:fixed;background:var(--white);border-radius:var(--btn-radius);padding:6px;min-width:140px;z-index:999;box-shadow:0 8px 0 rgba(99,102,241,.1),0 16px 32px rgba(99,102,241,.1);display:none;}
@@ -682,18 +686,13 @@ function buildNav() {
   const modNav = document.getElementById('moduleNav');
   let html = '';
   modules.forEach((m, i) => {
-    html += `<span class="nav-item" draggable="true" data-view="module" data-module="${m.name}" data-idx="${i}"
-      onclick="if(!longPressTriggered)openModule('${m.name}')"
-      onmousedown="startLongPress(event,'${m.name}')"
-      onmouseup="cancelLongPress()"
-      onmouseleave="cancelLongPress()"
-      ontouchstart="startLongPress(event,'${m.name}')"
-      ontouchend="cancelLongPress()"
+    html += `<span class="nav-item module-nav-item" draggable="true" data-view="module" data-module="${m.name}" data-idx="${i}"
+      onclick="openModule('${m.name}')"
       ondragstart="handleDragStart(event,${i})"
       ondragover="handleDragOver(event)"
       ondragleave="handleDragLeave(event)"
       ondrop="handleDrop(event,${i})"
-      ondragend="handleDragEnd(event)">${m.name}</span>`;
+      ondragend="handleDragEnd(event)">${m.name}<span class="module-dots" onclick="event.stopPropagation();showModuleMenu(event,'${m.name}')">⋯</span></span>`;
   });
   if (modules.length === 0) {
     html += '<span class="nav-item" style="color:var(--muted);opacity:.6;" onclick="addModule()">+ 模块</span>';
@@ -717,28 +716,8 @@ function handleDrop(e, toIdx) {
 }
 function handleDragEnd(e) { e.target.classList.remove('dragging'); dragIdx = null; }
 
-// Long-press for module menu
+// Module menu via ⋯ dots
 let ctxModuleName = null;
-let longPressTimer = null;
-let longPressTriggered = false;
-
-function startLongPress(e, moduleName) {
-  longPressTriggered = false;
-  longPressTimer = setTimeout(() => {
-    longPressTriggered = true;
-    ctxModuleName = moduleName;
-    const menu = document.getElementById('moduleContextMenu');
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    const y = e.touches ? e.touches[0].clientY : e.clientY;
-    menu.style.left = x + 'px';
-    menu.style.top = y + 'px';
-    menu.classList.add('show');
-  }, 600);
-}
-
-function cancelLongPress() {
-  clearTimeout(longPressTimer);
-}
 
 function showModuleMenu(e, moduleName) {
   e.preventDefault();
