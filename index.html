@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今天，你复习了吗？</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#FFFFFF;--bg:#FAFAFE;
+  --purple:#6366F1;--coral:#FF6B6B;--yellow:#FFE66D;
+  --green:#4ADE80;--red:#FF6B6B;
+  --dark:#1E1B4B;--muted:#6B7280;
+  --radius:22px;--btn-radius:16px;
+}
+body{
+  font-family:'DM Sans',-apple-system,"PingFang SC",sans-serif;
+  background:var(--bg);color:var(--dark);line-height:1.5;
+  max-width:800px;margin:0 auto;padding:16px;min-height:100dvh;
+}
+
+/* ── Shared 3D Card ── */
+.card-3d{
+  background:var(--white);border-radius:var(--radius);
+  box-shadow:0 8px 0 rgba(99,102,241,.12),0 16px 32px rgba(99,102,241,.08);
+  padding:24px;margin-bottom:16px;
+}
+
+/* ── Accent Bar ── */
+.accent-bar{
+  height:5px;border-radius:3px;
+  background:linear-gradient(90deg,var(--purple),var(--coral),var(--yellow));
+  margin-bottom:16px;
+}
+
+/* ── 3D Button ── */
+.btn-3d{
+  padding:14px 28px;border:none;border-radius:var(--btn-radius);
+  font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
+  color:#fff;transition:all .1s;
+  position:relative;top:0;
+}
+.btn-3d-purple{background:linear-gradient(135deg,var(--purple),#818CF8);box-shadow:0 6px 0 #4F46E5,0 8px 16px rgba(99,102,241,.25);}
+.btn-3d-coral{background:linear-gradient(135deg,var(--coral),#FF8E8E);box-shadow:0 6px 0 #E55555,0 8px 16px rgba(255,107,107,.25);}
+.btn-3d-yellow{background:linear-gradient(135deg,var(--yellow),#FFF3A0);color:var(--dark);box-shadow:0 6px 0 #E6CF55,0 8px 16px rgba(255,230,109,.25);}
+.btn-3d:active{top:4px;box-shadow:0 2px 0 currentColor,0 4px 8px rgba(99,102,241,.15);}
+
+/* ── Login ── */
+.login-screen{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100dvh;text-align:center;padding:20px;
+  background:radial-gradient(ellipse at 30% 20%,rgba(99,102,241,.08),transparent 50%),
+             radial-gradient(ellipse at 70% 80%,rgba(255,107,107,.06),transparent 50%);
+}
+.login-screen .logo{
+  width:80px;height:80px;border-radius:24px;
+  background:linear-gradient(135deg,var(--purple),var(--coral));
+  margin-bottom:28px;display:flex;align-items:center;justify-content:center;
+  font-size:40px;color:#fff;
+  box-shadow:0 10px 0 rgba(99,102,241,.25),0 20px 40px rgba(99,102,241,.15);
+}
+.login-screen h1{font-size:28px;font-weight:800;margin-bottom:4px;letter-spacing:-.5px;}
+.login-screen .subtitle{font-size:15px;color:var(--muted);margin-bottom:40px;}
+
+/* Account circles — 3D floating */
+.account-list{display:flex;gap:28px;flex-wrap:wrap;justify-content:center;margin-bottom:36px;max-width:380px;}
+.account-item{display:flex;flex-direction:column;align-items:center;cursor:pointer;gap:10px;}
+.account-avatar{
+  width:80px;height:80px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;
+  font-size:28px;font-weight:700;color:#fff;
+  transition:transform .15s;
+  background:linear-gradient(135deg,var(--purple),#818CF8);
+  box-shadow:0 8px 0 rgba(99,102,241,.3),0 16px 32px rgba(99,102,241,.15);
+}
+.account-item:hover .account-avatar{transform:translateY(-4px);}
+.account-item.selected .account-avatar{
+  background:linear-gradient(135deg,var(--coral),var(--yellow));
+  box-shadow:0 8px 0 rgba(255,107,107,.3),0 0 0 4px var(--white),0 0 0 6px var(--purple);
+}
+.account-name{font-size:14px;font-weight:600;}
+
+/* PIN pad */
+.pin-section{margin-top:4px;}
+.pin-label{font-size:14px;color:var(--muted);margin-bottom:14px;}
+.pin-dots{display:flex;gap:18px;justify-content:center;margin-bottom:28px;}
+.pin-dot{
+  width:18px;height:18px;border-radius:50%;border:2px solid #ddd;
+  transition:all .2s;
+}
+.pin-dot.filled{
+  background:linear-gradient(135deg,var(--purple),var(--coral));
+  border-color:transparent;
+  box-shadow:0 4px 0 rgba(99,102,241,.3);
+}
+.pin-dot.error{background:var(--coral);border-color:var(--coral);animation:shake .4s;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pin-error{font-size:14px;color:var(--coral);margin-bottom:8px;min-height:22px;font-weight:600;}
+.login-screen .new-account-btn{
+  margin-top:28px;font-size:14px;color:var(--purple);cursor:pointer;
+  border:none;background:none;font-weight:700;
+}
+.login-screen .new-account-btn:hover{text-decoration:underline;}
+
+/* New account form */
+.new-account-form{max-width:300px;width:100%;margin:0 auto;}
+.new-account-form input{
+  width:100%;padding:14px 18px;border:2px solid #eee;border-radius:var(--btn-radius);
+  font-size:16px;outline:none;text-align:center;margin-bottom:12px;
+  background:var(--white);font-family:inherit;
+}
+.new-account-form input:focus{border-color:var(--purple);box-shadow:0 0 0 4px rgba(99,102,241,.08);}
+.form-actions{display:flex;gap:10px;justify-content:center;}
+.form-actions button{padding:10px 24px;border-radius:var(--btn-radius);font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:inherit;}
+.form-actions .btn-cancel{background:var(--bg);color:var(--muted);}
+.form-actions .btn-confirm{background:linear-gradient(135deg,var(--purple),#818CF8);color:#fff;box-shadow:0 4px 0 #4F46E5,0 6px 12px rgba(99,102,241,.2);}
+
+/* ── Header ── */
+.header{
+  background:var(--white);border-radius:var(--radius);
+  box-shadow:0 8px 0 rgba(99,102,241,.1),0 16px 32px rgba(99,102,241,.06);
+  padding:18px 24px;margin-bottom:20px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.header h2{font-size:18px;font-weight:800;letter-spacing:-.3px;}
+.header .user-info{
+  font-size:13px;color:var(--purple);cursor:pointer;position:relative;
+  padding:6px 14px;border-radius:var(--btn-radius);font-weight:700;
+  background:rgba(99,102,241,.06);
+}
+.header .user-info:hover{background:rgba(99,102,241,.12);}
+.user-dropdown{
+  position:absolute;top:100%;right:0;background:var(--white);border-radius:var(--btn-radius);
+  padding:6px;min-width:130px;display:none;z-index:50;
+  box-shadow:0 8px 0 rgba(99,102,241,.1),0 16px 32px rgba(99,102,241,.08);
+}
+.user-dropdown.show{display:block;}
+.user-dropdown div{padding:10px 14px;border-radius:12px;font-size:13px;cursor:pointer;font-weight:600;}
+.user-dropdown div:hover{background:rgba(99,102,241,.06);}
+.user-dropdown .logout-item{color:var(--coral);}
+
+/* ── Navigation ── */
+.nav{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px;}
+.nav-item{
+  padding:10px 20px;border-radius:var(--btn-radius);font-size:14px;font-weight:700;
+  border:none;background:var(--white);cursor:pointer;
+  transition:all .15s;color:var(--dark);font-family:inherit;
+  box-shadow:0 4px 0 rgba(99,102,241,.08),0 6px 12px rgba(99,102,241,.04);
+}
+.nav-item:hover{box-shadow:0 6px 0 rgba(99,102,241,.15),0 10px 20px rgba(99,102,241,.08);transform:translateY(-2px);}
+.nav-item.active{
+  background:linear-gradient(135deg,var(--purple),#818CF8);color:#fff;
+  box-shadow:0 6px 0 #4F46E5,0 10px 20px rgba(99,102,241,.2);
+}
+
+/* ── List ── */
+.list{margin-top:4px;}
+.list-item{
+  background:var(--white);border-radius:var(--btn-radius);padding:18px 20px;
+  margin-bottom:10px;cursor:pointer;border-left:5px solid transparent;
+  transition:all .15s;display:flex;justify-content:space-between;align-items:center;
+  box-shadow:0 2px 0 rgba(99,102,241,.05),0 4px 8px rgba(99,102,241,.03);
+}
+.list-item:hover{box-shadow:0 6px 0 rgba(99,102,241,.12),0 10px 20px rgba(99,102,241,.06);transform:translateY(-1px);}
+.list-item .info{flex:1;min-width:0;}
+.list-item .title{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.list-item .meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.list-item .score{font-size:13px;font-weight:700;margin-left:12px;white-space:nowrap;}
+
+.state-green{border-left-color:var(--green);}
+.state-yellow{border-left-color:var(--yellow);}
+.state-red{border-left-color:var(--coral);}
+.state-default{border-left-color:transparent;}
+
+/* ── Answer Screen ── */
+.answer-screen{
+  background:linear-gradient(135deg,var(--purple),#818CF8);
+  border-radius:var(--radius);padding:28px 24px;margin-top:16px;color:#fff;
+  box-shadow:0 8px 0 #4F46E5,0 16px 32px rgba(99,102,241,.2);
+}
+.answer-screen .definition{
+  font-size:15px;margin-bottom:20px;line-height:1.7;padding:16px 18px;
+  background:rgba(255,255,255,.15);border-radius:var(--btn-radius);color:rgba(255,255,255,.9);
+}
+.answer-screen .prompt{font-size:13px;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.7);}
+.answer-screen textarea{
+  width:100%;padding:16px;border:2px solid rgba(255,255,255,.2);border-radius:var(--btn-radius);
+  font-size:16px;line-height:1.6;min-height:120px;resize:vertical;outline:none;
+  font-family:inherit;background:rgba(255,255,255,.1);color:#fff;
+}
+.answer-screen textarea::placeholder{color:rgba(255,255,255,.4);}
+.answer-screen textarea:focus{border-color:rgba(255,255,255,.5);}
+.answer-screen .voice-btn{
+  margin-top:10px;padding:10px 20px;background:rgba(255,255,255,.15);border:none;
+  border-radius:var(--btn-radius);font-size:14px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;color:#fff;
+}
+.answer-screen .voice-btn.recording{background:var(--coral);}
+.answer-btns{display:flex;gap:12px;margin-top:24px;}
+.answer-btns button{
+  flex:1;padding:16px;border:none;border-radius:var(--btn-radius);
+  font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;
+  transition:all .1s;position:relative;top:0;
+}
+.answer-btns button:active{top:3px;}
+.btn-forgot{
+  background:linear-gradient(135deg,var(--coral),#FF8E8E);color:#fff;
+  box-shadow:0 6px 0 #E55555,0 10px 20px rgba(255,107,107,.2);
+}
+.btn-forgot:active{box-shadow:0 2px 0 #E55555,0 4px 8px rgba(255,107,107,.15);}
+.btn-struggling{
+  background:linear-gradient(135deg,var(--yellow),#FFF3A0);color:var(--dark);
+  box-shadow:0 6px 0 #E6CF55,0 10px 20px rgba(255,230,109,.2);
+}
+.btn-struggling:active{box-shadow:0 2px 0 #E6CF55,0 4px 8px rgba(255,230,109,.15);}
+.btn-remember{
+  background:linear-gradient(135deg,var(--green),#86EFAC);color:var(--dark);
+  box-shadow:0 6px 0 #3CB878,0 10px 20px rgba(74,222,128,.2);
+}
+.btn-remember:active{box-shadow:0 2px 0 #3CB878,0 4px 8px rgba(74,222,128,.15);}
+
+/* ── Input Form ── */
+.form-card{
+  background:var(--white);border-radius:var(--radius);
+  box-shadow:0 8px 0 rgba(99,102,241,.1),0 16px 32px rgba(99,102,241,.06);
+  padding:28px;margin-top:16px;max-width:500px;
+}
+.form-card label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;margin-top:16px;font-weight:700;}
+.form-card label:first-child{margin-top:0;}
+.form-card input,.form-card textarea,.form-card select{
+  width:100%;padding:14px 16px;border:2px solid #eee;border-radius:var(--btn-radius);
+  font-size:15px;outline:none;font-family:inherit;background:var(--bg);
+  transition:border-color .15s;
+}
+.form-card input:focus,.form-card textarea:focus,.form-card select:focus{
+  border-color:var(--purple);
+  box-shadow:0 0 0 4px rgba(99,102,241,.06);
+}
+.form-card select{appearance:none;}
+
+.btn-primary{
+  padding:14px 28px;background:linear-gradient(135deg,var(--purple),#818CF8);color:#fff;
+  border:none;border-radius:var(--btn-radius);font-size:15px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+  box-shadow:0 6px 0 #4F46E5,0 10px 20px rgba(99,102,241,.2);
+  transition:all .1s;position:relative;top:0;
+}
+.btn-primary:active{top:4px;box-shadow:0 2px 0 #4F46E5,0 4px 8px rgba(99,102,241,.1);}
+
+/* ── Settings ── */
+.settings-card{
+  background:var(--white);border-radius:var(--radius);
+  box-shadow:0 8px 0 rgba(99,102,241,.1),0 16px 32px rgba(99,102,241,.06);
+  padding:28px;max-width:500px;margin-top:16px;
+}
+.settings-card label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;margin-top:18px;font-weight:700;}
+.settings-card label:first-child{margin-top:0;}
+.settings-card input{
+  width:100%;padding:14px 16px;border:2px solid #eee;border-radius:var(--btn-radius);
+  font-size:15px;outline:none;background:var(--bg);transition:border-color .15s;
+}
+.settings-card input:focus{border-color:var(--purple);box-shadow:0 0 0 4px rgba(99,102,241,.06);}
+.settings-card .saved{font-size:13px;color:var(--green);font-weight:700;margin-top:4px;}
+.settings-card hr{border:none;border-top:2px solid #eee;margin:28px 0;}
+
+/* ── Back Button ── */
+.back-btn{
+  display:inline-flex;align-items:center;gap:4px;font-size:14px;
+  color:var(--purple);cursor:pointer;margin-bottom:16px;border:none;
+  background:none;padding:0;font-weight:700;font-family:inherit;
+}
+.back-btn:hover{text-decoration:underline;}
+
+/* ── Module Header ── */
+.module-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.module-header h3{font-size:18px;font-weight:800;}
+
+/* ── Empty State ── */
+#reviewEmpty{text-align:center;padding:60px 20px;color:var(--muted);}
+
+/* ── Mobile ── */
+@media(max-width:600px){
+  body{padding:10px;}
+  .login-screen h1{font-size:22px;}
+  .answer-btns button{font-size:14px;padding:14px 8px;}
+  .header h2{font-size:16px;}
+  .header{padding:14px 18px;}
+}
+.hidden{display:none !important;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="loginScreen" class="login-screen">
+  <div class="logo">&#x1F4DA;</div>
+  <h1>今天，你复习了吗？</h1>
+  <div class="subtitle">选择一个用户，输入 PIN 码进入</div>
+
+  <!-- Account circles -->
+  <div class="account-list" id="accountList"></div>
+
+  <!-- PIN dots -->
+  <div class="pin-section" id="pinSection">
+    <div class="pin-label">输入 PIN 码</div>
+    <div class="pin-dots" id="pinDots">
+      <span class="pin-dot"></span><span class="pin-dot"></span>
+      <span class="pin-dot"></span><span class="pin-dot"></span>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+
+  <button class="new-account-btn" id="newAccountBtn" onclick="showNewAccountForm()">+ 创建新用户</button>
+
+  <!-- New account form (hidden) -->
+  <div class="new-account-form hidden" id="newAccountForm">
+    <input type="text" id="newAccountName" placeholder="用户名" maxlength="10">
+    <input type="password" id="newPIN" placeholder="4 位 PIN 码" maxlength="4" pattern="[0-9]{4}">
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="hideNewAccountForm()">取消</button>
+      <button class="btn-confirm" onclick="createAccount()">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div id="mainScreen" class="hidden">
+  <div class="header">
+    <h2 id="headerTitle">今日复习</h2>
+    <span class="user-info" id="userMenu" onclick="toggleUserMenu()">
+      <span id="currentUserLabel"></span>
+      <div class="user-dropdown" id="userDropdown">
+        <div onclick="switchView('settings')">设置</div>
+        <div class="logout-item" onclick="logout()">退出</div>
+      </div>
+    </span>
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav" id="navBar">
+    <span class="nav-item active" data-view="review" onclick="switchView('review')">今日复习</span>
+  </div>
+
+  <!-- Review List -->
+  <div id="reviewView">
+    <div class="list" id="reviewList"></div>
+    <div id="reviewEmpty">
+      <div style="font-size:48px;margin-bottom:12px;">&#9749;</div>
+      <div>今天没有待复习的内容</div>
+      <div style="font-size:13px;margin-top:4px;">去新建一些知识吧</div>
+    </div>
+  </div>
+
+  <!-- Module View -->
+  <div id="moduleView" class="hidden">
+    <button class="back-btn" onclick="switchView('review')">&larr; 返回</button>
+    <div class="module-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <h3 id="moduleTitle" style="font-size:18px;cursor:pointer;" onclick="renameModule()" title="点击修改名称"></h3>
+        <span style="font-size:12px;color:var(--red);cursor:pointer;font-weight:600;" onclick="deleteModule()">删除</span>
+      </div>
+      <button class="btn-primary" style="width:auto;margin:0;padding:8px 18px;font-size:14px;" onclick="showAddItem()">+ 新建</button>
+    </div>
+    <div class="list" id="moduleItemList"></div>
+  </div>
+
+  <!-- Answer View -->
+  <div id="answerView" class="hidden">
+    <button class="back-btn" onclick="backToList()">&larr; 返回列表</button>
+    <div class="answer-screen" id="answerContent"></div>
+  </div>
+
+  <!-- Add Item View -->
+  <div id="addItemView" class="hidden">
+    <button class="back-btn" onclick="switchView('review')">&larr; 返回</button>
+    <div class="form-card">
+      <h3 style="margin-bottom:16px;">新建知识</h3>
+      <label>模式</label>
+      <select id="addMode">
+        <option value="概念理解">概念理解</option>
+        <option value="精确记忆">精确记忆</option>
+      </select>
+      <label id="addTitleLabel">标题</label>
+      <input type="text" id="addTitle" placeholder="概念名/单词/首句">
+      <label>完整定义 / 正确答案</label>
+      <textarea id="addDefinition" rows="4" placeholder="定义或标准答案"></textarea>
+      <div id="addEngSection" class="hidden">
+        <label>中文释义（AI 自动翻译，也可手动填）</label>
+        <input type="text" id="addEngMeaning" placeholder="中文意思">
+      </div>
+      <button class="btn-primary" onclick="saveItem()">保存</button>
+    </div>
+  </div>
+
+  <!-- Settings View -->
+  <div id="settingsView" class="hidden">
+    <button class="back-btn" onclick="switchView('review')">&larr; 返回</button>
+    <div class="settings-card">
+      <h3 style="margin-bottom:16px;">设置</h3>
+      <label>AI API Key（可选，用于概念判断 + 英语翻译）</label>
+      <input type="password" id="setApiKey" placeholder="sk-xxx / DeepSeek Key">
+      <div style="font-size:12px;color:var(--muted);margin:4px 0 0;">不填也能用，概念题改为手动对照，英语翻译改为手填</div>
+      <hr style="border:none;border-top:2px solid #eee;margin:28px 0;">
+      <h3 style="margin-bottom:12px;">账号管理</h3>
+      <div id="accountManageList" style="margin-bottom:8px;"></div>
+      <div style="font-size:12px;color:var(--coral);cursor:pointer;font-weight:600;" id="accountManageHint" onclick="deleteCurrentAccount()"></div>
+      <hr style="border:none;border-top:2px solid #eee;margin:28px 0;">
+      <label>数据管理</label>
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
+        <button class="btn-primary" onclick="exportData()" style="width:auto;font-size:13px;padding:10px 18px;">导出数据</button>
+        <button class="btn-primary" onclick="document.getElementById('importFile').click()" style="width:auto;font-size:13px;padding:10px 18px;background:var(--bg);color:var(--dark);box-shadow:0 4px 0 #ddd,0 6px 12px rgba(0,0,0,.05);">导入数据</button>
+        <input type="file" id="importFile" style="display:none;" accept=".json" onchange="importData(event)">
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px;">导出为 JSON 文件，可用于备份或同步到其他设备</div>
+      <button class="btn-primary" onclick="saveSettings()" style="margin-top:28px;width:100%;">保存设置</button>
+      <div class="saved" id="settingsSaved"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════ STATE ═══════════
+const LS = key => localStorage.getItem('srs_' + key);
+const LSS = (key, val) => localStorage.setItem('srs_' + key, val);
+
+let currentAccount = null;
+let currentModule = null;
+let currentView = 'review';
+let modules = [];
+let allItems = [];
+let reviewItems = [];
+let answeringItem = null;
+
+// ═══════════ API ═══════════
+// ═══════════ LOGIN ═══════════
+let selectedAccount = null;
+let pinInput = '';
+
+function loadAccounts() {
+  try { return JSON.parse(LS('accounts') || '[]'); } catch { return []; }
+}
+
+const COLORS = ['#4a90d9','#7b68ee','#e8864a','#50b89c','#d95b5b','#8e7cc3'];
+
+function initLogin() {
+  const accounts = loadAccounts();
+  const list = document.getElementById('accountList');
+  let html = '';
+  accounts.forEach((a, i) => {
+    const initials = a.name.substring(0, 2);
+    html += `
+      <div class="account-item" data-name="${a.name}" onclick="selectAccount('${a.name}')">
+        <div class="account-avatar" style="background:${COLORS[i % COLORS.length]}">${initials}</div>
+        <div class="account-name">${a.name}</div>
+      </div>
+    `;
+  });
+  list.innerHTML = html;
+  selectedAccount = null;
+  pinInput = '';
+  updatePinDots();
+  document.getElementById('pinSection').style.opacity = '0';
+  document.getElementById('pinError').textContent = '';
+  document.getElementById('newAccountForm').classList.add('hidden');
+  document.getElementById('newAccountBtn').classList.remove('hidden');
+}
+
+function selectAccount(name) {
+  selectedAccount = name;
+  pinInput = '';
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+  document.getElementById('pinSection').style.opacity = '1';
+
+  // Highlight selected
+  document.querySelectorAll('.account-item').forEach(el => {
+    el.classList.toggle('selected', el.dataset.name === name);
+  });
+
+  // Focus for keyboard PIN
+  document.getElementById('pinSection').focus();
+
+  // Show/hide "add new" button
+  document.getElementById('newAccountBtn').classList.toggle('hidden', true);
+  document.getElementById('newAccountForm').classList.add('hidden');
+}
+
+// Listen for keyboard PIN input
+document.addEventListener('keydown', function(e) {
+  if (!selectedAccount) return;
+  if (document.getElementById('loginScreen').classList.contains('hidden')) return;
+  // Don't capture if typing in a form input
+  if (e.target.tagName === 'INPUT') return;
+
+  if (e.key >= '0' && e.key <= '9') {
+    pinInput += e.key;
+    if (pinInput.length > 4) pinInput = pinInput.substring(0, 4);
+    updatePinDots();
+    if (pinInput.length === 4) {
+      setTimeout(verifyPIN, 200);
+    }
+  } else if (e.key === 'Backspace' || e.key === 'Delete') {
+    pinInput = pinInput.slice(0, -1);
+    updatePinDots();
+    document.getElementById('pinError').textContent = '';
+    clearDotError();
+  }
+});
+
+function updatePinDots() {
+  const dots = document.querySelectorAll('#pinDots .pin-dot');
+  dots.forEach((d, i) => {
+    d.classList.toggle('filled', i < pinInput.length);
+  });
+}
+
+function clearDotError() {
+  document.querySelectorAll('#pinDots .pin-dot').forEach(d => d.classList.remove('error'));
+}
+
+function verifyPIN() {
+  const accounts = loadAccounts();
+  const acc = accounts.find(a => a.name === selectedAccount);
+  if (!acc || acc.pin !== pinInput) {
+    document.getElementById('pinError').textContent = 'PIN 码不正确';
+    document.querySelectorAll('#pinDots .pin-dot').forEach(d => d.classList.add('error'));
+    setTimeout(() => { pinInput = ''; updatePinDots(); clearDotError(); }, 800);
+    return;
+  }
+  // Success
+  currentAccount = selectedAccount;
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mainScreen').classList.remove('hidden');
+  document.getElementById('currentUserLabel').textContent = selectedAccount;
+  selectedAccount = null;
+  pinInput = '';
+  loadMainData();
+}
+
+function showNewAccountForm() {
+  document.getElementById('newAccountForm').classList.remove('hidden');
+  document.getElementById('newAccountBtn').classList.add('hidden');
+  document.getElementById('pinSection').style.opacity = '0';
+  selectedAccount = null;
+  pinInput = '';
+  updatePinDots();
+  document.querySelectorAll('.account-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById('newAccountName').focus();
+}
+
+function hideNewAccountForm() {
+  document.getElementById('newAccountForm').classList.add('hidden');
+  document.getElementById('newAccountBtn').classList.remove('hidden');
+  document.getElementById('newAccountName').value = '';
+  document.getElementById('newPIN').value = '';
+}
+
+function createAccount() {
+  const name = document.getElementById('newAccountName').value.trim();
+  const pin = document.getElementById('newPIN').value;
+  if (!name) return alert('请输入用户名');
+  if (!/^\d{4}$/.test(pin)) return alert('PIN 必须是 4 位数字');
+  const accounts = loadAccounts();
+  if (accounts.find(a => a.name === name)) return alert('该名称已存在');
+  accounts.push({ name, pin });
+  LSS('accounts', JSON.stringify(accounts));
+  hideNewAccountForm();
+  initLogin();
+}
+
+function deleteOtherAccount(name) {
+  if (!confirm('确定删除用户"' + name + '"吗？该用户的所有数据将被清除。')) return;
+  let accounts = loadAccounts();
+  accounts = accounts.filter(a => a.name !== name);
+  LSS('accounts', JSON.stringify(accounts));
+  localStorage.removeItem('srs_modules_' + name);
+  localStorage.removeItem('srs_items_' + name);
+  loadSettings();
+  buildNav();
+}
+
+function deleteCurrentAccount() {
+  if (!confirm('确定删除当前账号"' + currentAccount + '"吗？所有数据将被清除，无法恢复。')) return;
+  let accounts = loadAccounts();
+  accounts = accounts.filter(a => a.name !== currentAccount);
+  LSS('accounts', JSON.stringify(accounts));
+  localStorage.removeItem('srs_modules_' + currentAccount);
+  localStorage.removeItem('srs_items_' + currentAccount);
+  logout();
+}
+
+function toggleUserMenu() {
+  const dd = document.getElementById('userDropdown');
+  dd.classList.toggle('show');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#userMenu')) {
+    document.getElementById('userDropdown').classList.remove('show');
+  }
+});
+
+function logout() {
+  currentAccount = null;
+  currentModule = null;
+  allItems = [];
+  reviewItems = [];
+  document.getElementById('mainScreen').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  initLogin();
+}
+
+// ═══════════ DATA ═══════════
+function loadMainData() {
+  loadModules();
+  loadItems();
+  buildNav();
+  switchView('review');
+}
+
+function loadModules() {
+  try { modules = JSON.parse(LS('modules_' + currentAccount) || '[]'); } catch { modules = []; }
+}
+
+function saveModules() {
+  LSS('modules_' + currentAccount, JSON.stringify(modules));
+}
+
+function loadItems() {
+  try { allItems = JSON.parse(LS('items_' + currentAccount) || '[]'); } catch { allItems = []; }
+}
+
+function saveItems() {
+  LSS('items_' + currentAccount, JSON.stringify(allItems));
+}
+
+// ═══════════ NAVIGATION ═══════════
+function buildNav() {
+  const nav = document.getElementById('navBar');
+  let html = '<span class="nav-item active" data-view="review" onclick="switchView(\'review\')">今日复习</span>';
+  modules.forEach(m => {
+    html += `<span class="nav-item" data-view="module" data-module="${m.name}" onclick="switchView(\'review\');openModule(\'${m.name}\')">${m.name}</span>`;
+  });
+  // Gray placeholder: becomes first module, or "+" when modules exist
+  if (modules.length === 0) {
+    html += '<span class="nav-item" style="color:var(--text2);opacity:.6;" onclick="addModule()">模块</span>';
+  }
+  html += '<span class="nav-item" style="font-size:18px;padding:4px 10px;font-weight:400;" onclick="addModule()" title="新建模块">+</span>';
+  nav.innerHTML = html;
+}
+
+function renameModule() {
+  const oldName = currentModule;
+  const newName = prompt('修改模块名称：', oldName);
+  if (!newName || !newName.trim() || newName.trim() === oldName) return;
+  if (modules.find(m => m.name === newName.trim())) { alert('模块已存在'); return; }
+  // Update module name in modules array
+  const mod = modules.find(m => m.name === oldName);
+  if (mod) mod.name = newName.trim();
+  // Update all items belonging to this module
+  allItems.forEach(i => { if (i.module === oldName) i.module = newName.trim(); });
+  saveModules();
+  saveItems();
+  currentModule = newName.trim();
+  document.getElementById('moduleTitle').textContent = currentModule;
+  buildNav();
+}
+
+function deleteModule() {
+  if (!confirm('确定删除模块"' + currentModule + '"吗？该模块下的所有内容将被清除。')) return;
+  modules = modules.filter(m => m.name !== currentModule);
+  allItems = allItems.filter(i => i.module !== currentModule);
+  saveModules();
+  saveItems();
+  currentModule = null;
+  buildNav();
+  switchView('review');
+}
+
+function addModule() {
+  const name = prompt('新模块名称：');
+  if (!name || !name.trim()) return;
+  if (modules.find(m => m.name === name.trim())) { alert('模块已存在'); return; }
+  modules.push({ name: name.trim() });
+  saveModules();
+  buildNav();
+}
+
+function openModule(name) {
+  currentModule = name;
+  document.getElementById('moduleTitle').textContent = name;
+  document.getElementById('reviewView').classList.add('hidden');
+  document.getElementById('moduleView').classList.remove('hidden');
+  document.getElementById('addItemView').classList.add('hidden');
+  document.getElementById('answerView').classList.add('hidden');
+  document.getElementById('settingsView').classList.add('hidden');
+  renderModuleItems();
+}
+
+function switchView(view) {
+  currentView = view;
+  document.getElementById('userDropdown').classList.remove('show');
+  document.getElementById('reviewView').classList.toggle('hidden', view !== 'review');
+  document.getElementById('moduleView').classList.toggle('hidden', view !== 'module');
+  document.getElementById('addItemView').classList.toggle('hidden', view !== 'add');
+  document.getElementById('answerView').classList.toggle('hidden', view !== 'answer');
+  document.getElementById('settingsView').classList.toggle('hidden', view !== 'settings');
+
+  // Update nav active
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.view === view || (view === 'module' && el.dataset.module === currentModule));
+  });
+
+  document.getElementById('headerTitle').textContent =
+    view === 'settings' ? '设置' :
+    view === 'add' ? '新建知识' :
+    view === 'module' ? currentModule || '' :
+    '今日复习';
+
+  if (view === 'review') { currentModule = null; buildReviewList(); }
+  if (view === 'settings') loadSettings();
+}
+
+// ═══════════ MODULE ITEMS ═══════════
+function renderModuleItems() {
+  const items = allItems.filter(i => i.module === currentModule);
+  const list = document.getElementById('moduleItemList');
+  if (items.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">暂无内容，点右上角新建</div>';
+    return;
+  }
+  list.innerHTML = items.map(i => `
+    <div class="list-item ${stateColor(i)}">
+      <div class="info">
+        <div class="title">${esc(i.title)}</div>
+        <div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${i.nextReview || '-'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showAddItem() {
+  switchView('add');
+  document.getElementById('moduleView').classList.remove('hidden');
+  const isEnglishModule = currentModule === '英语' || currentModule === '英文';
+  document.getElementById('addMode').value = isEnglishModule ? '精确记忆' : '概念理解';
+  document.getElementById('addEngSection').classList.toggle('hidden', !isEnglishModule);
+  document.getElementById('addTitle').value = '';
+  document.getElementById('addDefinition').value = '';
+  document.getElementById('addEngMeaning').value = '';
+  document.getElementById('addTitleLabel').textContent = isEnglishModule ? '单词 / 句子' : '标题';
+}
+
+async function saveItem() {
+  const mode = document.getElementById('addMode').value;
+  const title = document.getElementById('addTitle').value.trim();
+  const definition = document.getElementById('addDefinition').value.trim();
+  if (!title) return alert('请输入标题');
+
+  const today = new Date().toISOString().split('T')[0];
+  const nextReview = addDays(today, 1); // First review: 1 day later
+
+  let engMeaning = '';
+  const isEnglishModule = currentModule === '英语' || currentModule === '英文';
+  if (isEnglishModule) {
+    engMeaning = document.getElementById('addEngMeaning').value.trim();
+    // Auto-translate if API key is set and no manual input
+    if (!engMeaning) {
+      const apiKey = LS('apiKey');
+      if (apiKey) {
+        try {
+          engMeaning = await autoTranslate(title, apiKey);
+        } catch { engMeaning = ''; }
+      }
+    }
+  }
+
+  const item = {
+    id: Date.now().toString(36),
+    module: currentModule,
+    mode,
+    title,
+    definition,
+    engMeaning,
+    createdAt: today,
+    reviewCount: 0,
+    nextReview,
+    strugglingDays: 0,
+    status: 'pending', // pending | reviewing | done
+    reviewHistory: [],
+  };
+
+  allItems.push(item);
+  saveItems();
+  renderModuleItems();
+  switchView('module');
+}
+
+// ═══════════ REVIEW ═══════════
+function getToday() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function buildReviewList() {
+  const today = getToday();
+  reviewItems = allItems.filter(i => i.nextReview <= today);
+  const list = document.getElementById('reviewList');
+  const empty = document.getElementById('reviewEmpty');
+
+  if (reviewItems.length === 0) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  // Group by module
+  const groups = {};
+  reviewItems.forEach(i => {
+    if (!groups[i.module]) groups[i.module] = [];
+    groups[i.module].push(i);
+  });
+
+  let html = '';
+  Object.keys(groups).forEach(mod => {
+    html += `<div style="font-size:12px;color:var(--text2);padding:12px 4px 4px;font-weight:600;letter-spacing:.5px;">${mod}</div>`;
+    groups[mod].forEach(i => {
+      html += `
+        <div class="list-item ${stateColor(i)}" onclick="startReview('${i.id}')">
+          <div class="info">
+            <div class="title">${esc(i.title)}</div>
+            <div class="meta">${i.mode} · 第 ${i.reviewCount + 1} 次复习</div>
+          </div>
+          <div class="score">${statusEmoji(i)}</div>
+        </div>
+      `;
+    });
+  });
+  list.innerHTML = html;
+}
+
+function startReview(id) {
+  answeringItem = allItems.find(i => i.id === id);
+  if (!answeringItem) return;
+  switchView('answer');
+  renderAnswer();
+}
+
+function renderAnswer() {
+  const i = answeringItem;
+  const isEnglishModule = i.module === '英语' || i.module === '英文';
+  const isConcept = i.mode === '概念理解';
+  const isENtoCN = isEnglishModule && i.reviewCount % 2 === 1;
+
+  let prompt, defDisplay;
+  if (isEnglishModule && isENtoCN) {
+    prompt = '请写出中文意思';
+    defDisplay = i.title;
+  } else if (isEnglishModule) {
+    prompt = '请拼写英文';
+    defDisplay = i.engMeaning || i.definition;
+  } else if (isConcept) {
+    prompt = '请用自己的话阐述理解';
+    defDisplay = i.definition;
+  } else {
+    prompt = '请写出正确答案';
+    defDisplay = i.title;
+  }
+
+  document.getElementById('answerContent').innerHTML = `
+    <div class="prompt">${prompt}</div>
+    ${defDisplay ? `<div class="definition">${esc(defDisplay)}</div>` : ''}
+    <textarea id="answerInput" placeholder="在此输入你的回答..."></textarea>
+    <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤 语音输入</button>
+    <div class="answer-btns">
+      <button class="btn-forgot" onclick="submitAnswer('forgot')">忘了</button>
+      <button class="btn-struggling" onclick="submitAnswer('struggling')">勉强</button>
+      <button class="btn-remember" onclick="submitAnswer('remember')">记得</button>
+    </div>
+  `;
+
+  // Concept mode: show definition after answering (for self-comparison)
+  if (isConcept) {
+    const ta = document.getElementById('answerInput');
+    ta.placeholder = '写下你对上面概念的理解...';
+  }
+}
+
+function submitAnswer(level) {
+  const i = answeringItem;
+  if (!i) return;
+  const answer = document.getElementById('answerInput')?.value || '';
+
+  const intervals = [1, 2, 4, 7, 15, 30];
+  const today = getToday();
+
+  if (level === 'remember') {
+    i.reviewCount = Math.min(i.reviewCount + 1, intervals.length - 1);
+    i.nextReview = addDays(today, intervals[i.reviewCount]);
+    i.strugglingDays = 0;
+  } else if (level === 'struggling') {
+    i.strugglingDays++;
+    if (i.strugglingDays >= 5) {
+      // Auto-downgrade to forgot
+      i.reviewCount = 0;
+      i.nextReview = addDays(today, intervals[0]);
+      i.strugglingDays = 0;
+    } else {
+      i.nextReview = addDays(today, 1);
+    }
+  } else {
+    // forgot
+    i.reviewCount = 0;
+    i.nextReview = addDays(today, intervals[0]);
+    i.strugglingDays = 0;
+  }
+
+  i.reviewHistory.push({ date: today, level, answer });
+  saveItems();
+  answeringItem = null;
+  backToList();
+}
+
+function backToList() {
+  if (currentModule) {
+    switchView('module');
+    renderModuleItems();
+  } else {
+    switchView('review');
+    buildReviewList();
+  }
+}
+
+// ═══════════ VOICE ═══════════
+let recognition = null;
+function toggleVoice() {
+  const btn = document.getElementById('voiceBtn');
+  if (recognition && btn.classList.contains('recording')) {
+    recognition.stop();
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) { alert('你的浏览器不支持语音识别'); return; }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = 'zh-CN';
+  recognition.interimResults = false;
+  recognition.onresult = function(e) {
+    const text = e.results[0][0].transcript;
+    const ta = document.getElementById('answerInput');
+    if (ta) ta.value = (ta.value + ' ' + text).trim();
+    btn.classList.remove('recording');
+    btn.textContent = '🎤 语音输入';
+  };
+  recognition.onerror = function() {
+    btn.classList.remove('recording');
+    btn.textContent = '🎤 语音输入';
+  };
+  recognition.onend = function() {
+    btn.classList.remove('recording');
+    btn.textContent = '🎤 语音输入';
+  };
+  recognition.start();
+  btn.classList.add('recording');
+  btn.textContent = '🔴 录音中...';
+}
+
+// ═══════════ SETTINGS ═══════════
+function loadSettings() {
+  document.getElementById('setApiKey').value = LS('apiKey') || '';
+
+  // Account management
+  const accounts = loadAccounts();
+  let html = '';
+  accounts.forEach(a => {
+    const isCurrent = a.name === currentAccount;
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #eee;">';
+    html += '<span style="font-weight:600;">' + a.name + (isCurrent ? ' <span style=\"font-size:11px;color:var(--muted);\">(当前)</span>' : '') + '</span>';
+    if (!isCurrent) {
+      html += '<span style="font-size:12px;color:var(--coral);cursor:pointer;font-weight:600;" onclick="deleteOtherAccount(\'' + a.name + '\')">删除</span>';
+    }
+    html += '</div>';
+  });
+  document.getElementById('accountManageList').innerHTML = html;
+  document.getElementById('accountManageHint').textContent = '删除当前账号（' + currentAccount + '）';
+}
+
+function saveSettings() {
+  LSS('apiKey', document.getElementById('setApiKey').value.trim());
+  document.getElementById('settingsSaved').textContent = '已保存 ✓';
+  setTimeout(() => document.getElementById('settingsSaved').textContent = '', 2000);
+}
+
+function exportData() {
+  const data = {
+    account: currentAccount,
+    modules: modules,
+    items: allItems,
+    exportedAt: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `复习数据-${currentAccount}-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  document.getElementById('settingsSaved').textContent = '数据已导出 ✓';
+  setTimeout(() => document.getElementById('settingsSaved').textContent = '', 2000);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.account || !data.items) throw new Error('Invalid format');
+      if (!confirm(`即将导入账号"${data.account}"的数据：${data.modules.length} 个模块，${data.items.length} 条知识。当前数据将被覆盖，确定吗？`)) return;
+      LSS('modules_' + data.account, JSON.stringify(data.modules));
+      LSS('items_' + data.account, JSON.stringify(data.items));
+      // If importing current account, reload
+      if (data.account === currentAccount) {
+        modules = data.modules;
+        allItems = data.items;
+        saveModules();
+        saveItems();
+        buildNav();
+        switchView('review');
+      }
+      document.getElementById('settingsSaved').textContent = '数据已导入 ✓';
+      setTimeout(() => document.getElementById('settingsSaved').textContent = '', 2000);
+    } catch (err) {
+      alert('导入失败：文件格式不正确');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ═══════════ UTILS ═══════════
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+function esc(s) {
+  if (!s) return '';
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function stateColor(i) {
+  if (!i.reviewHistory || i.reviewHistory.length === 0) return 'state-default';
+  const last = i.reviewHistory[i.reviewHistory.length - 1];
+  if (last.level === 'remember') return 'state-green';
+  if (last.level === 'struggling') return 'state-yellow';
+  return 'state-red';
+}
+
+function statusLabel(i) {
+  if (i.reviewCount === 0) return '新学';
+  return `复习 ${i.reviewCount}/6`;
+}
+
+function statusEmoji(i) {
+  if (!i.reviewHistory || i.reviewHistory.length === 0) return '';
+  const last = i.reviewHistory[i.reviewHistory.length - 1];
+  if (last.level === 'remember') return '●';
+  if (last.level === 'struggling') return '●';
+  return '●';
+}
+
+async function autoTranslate(text, apiKey) {
+  const resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages: [{ role: 'user', content: `将以下英文翻译成简洁的中文，只返回翻译结果，不要解释：\n\n${text}` }],
+      max_tokens: 200,
+    })
+  });
+  const d = await resp.json();
+  if (d.choices && d.choices[0]) {
+    return d.choices[0].message.content.trim();
+  }
+  return '';
+}
+
+// ═══════════ INIT ═══════════
+initLogin();
+</script>
+</body>
+</html>
