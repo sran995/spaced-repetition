@@ -1012,39 +1012,60 @@ function getToday() {
 
 function buildReviewList() {
   const today = getToday();
-  reviewItems = allItems.filter(i => i.nextReview <= today);
+  // Items due for review today
+  reviewItems = allItems.filter(i => i.nextReview && i.nextReview <= today);
+  // Items newly created today (first review is tomorrow, but show them here)
+  const newToday = allItems.filter(i => i.createdAt === today && (!i.nextReview || i.nextReview > today));
+
   const list = document.getElementById('reviewList');
   const empty = document.getElementById('reviewEmpty');
 
-  if (reviewItems.length === 0) {
+  if (reviewItems.length === 0 && newToday.length === 0) {
     list.innerHTML = '';
     empty.classList.remove('hidden');
     return;
   }
   empty.classList.add('hidden');
 
-  // Group by module
-  const groups = {};
-  reviewItems.forEach(i => {
-    if (!groups[i.module]) groups[i.module] = [];
-    groups[i.module].push(i);
-  });
-
   let html = '';
-  Object.keys(groups).forEach(mod => {
-    html += `<div style="font-size:12px;color:var(--text2);padding:12px 4px 4px;font-weight:600;letter-spacing:.5px;">${mod}</div>`;
-    groups[mod].forEach(i => {
+
+  // New today section
+  if (newToday.length > 0) {
+    html += '<div style="font-size:12px;color:var(--purple);font-weight:700;padding:4px 4px 8px;letter-spacing:.5px;">🆕 今天新学 · ' + newToday.length + '条</div>';
+    newToday.forEach(i => {
       html += `
-        <div class="list-item ${stateColor(i)}" onclick="startReview('${i.id}')">
+        <div class="list-item state-default" onclick="startReview('${i.id}')">
           <div class="info">
             <div class="title">${esc(i.title)}</div>
-            <div class="meta">${i.mode} · 第 ${i.reviewCount + 1} 次复习</div>
+            <div class="meta">${i.mode} · 首次复习明天 · ${i.module}</div>
           </div>
-          <div class="score">${statusEmoji(i)}</div>
         </div>
       `;
     });
-  });
+  }
+
+  // Due for review
+  if (reviewItems.length > 0) {
+    html += '<div style="font-size:12px;color:var(--coral);font-weight:700;padding:16px 4px 8px;letter-spacing:.5px;">📋 待复习 · ' + reviewItems.length + '条</div>';
+    const groups = {};
+    reviewItems.forEach(i => {
+      if (!groups[i.module]) groups[i.module] = [];
+      groups[i.module].push(i);
+    });
+    Object.keys(groups).forEach(mod => {
+      groups[mod].forEach(i => {
+        html += `
+          <div class="list-item ${stateColor(i)}" onclick="startReview('${i.id}')">
+            <div class="info">
+              <div class="title">${esc(i.title)}</div>
+              <div class="meta">${i.mode} · 第 ${i.reviewCount + 1} 次复习 · ${i.module}</div>
+            </div>
+            <div class="score">${statusEmoji(i)}</div>
+          </div>
+        `;
+      });
+    });
+  }
   list.innerHTML = html;
 }
 
