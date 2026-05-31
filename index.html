@@ -42,6 +42,8 @@ body{
 .sidebar .nav-item:hover{background:rgba(99,102,241,.06);}
 .sidebar .nav-item.active{background:var(--purple);color:#fff;}
 .sidebar .nav-item.add-module{color:var(--muted);font-size:18px;padding:6px 12px;font-weight:400;}
+.sidebar .nav-item.dragging{opacity:.4;background:rgba(99,102,241,.1);}
+.sidebar .nav-item.drag-over{border-top:2px solid var(--purple);}
 .sidebar .settings-btn{margin-top:auto;}
 
 /* ── Main Content ── */
@@ -669,8 +671,14 @@ function saveItems() {
 function buildNav() {
   const modNav = document.getElementById('moduleNav');
   let html = '';
-  modules.forEach(m => {
-    html += `<span class="nav-item" data-view="module" data-module="${m.name}" onclick="openModule('${m.name}')">${m.name}</span>`;
+  modules.forEach((m, i) => {
+    html += `<span class="nav-item" draggable="true" data-view="module" data-module="${m.name}" data-idx="${i}"
+      onclick="openModule('${m.name}')"
+      ondragstart="handleDragStart(event,${i})"
+      ondragover="handleDragOver(event)"
+      ondragleave="handleDragLeave(event)"
+      ondrop="handleDrop(event,${i})"
+      ondragend="handleDragEnd(event)">${m.name}</span>`;
   });
   if (modules.length === 0) {
     html += '<span class="nav-item" style="color:var(--muted);opacity:.6;" onclick="addModule()">+ 模块</span>';
@@ -678,6 +686,21 @@ function buildNav() {
   html += '<span class="nav-item add-module" onclick="addModule()" title="新建模块">+</span>';
   modNav.innerHTML = html;
 }
+
+let dragIdx = null;
+function handleDragStart(e, idx) { dragIdx = idx; e.target.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+function handleDragOver(e) { e.preventDefault(); e.target.classList.add('drag-over'); e.dataTransfer.dropEffect = 'move'; }
+function handleDragLeave(e) { e.target.classList.remove('drag-over'); }
+function handleDrop(e, toIdx) {
+  e.preventDefault();
+  e.target.classList.remove('drag-over');
+  if (dragIdx === null || dragIdx === toIdx) return;
+  const [moved] = modules.splice(dragIdx, 1);
+  modules.splice(toIdx, 0, moved);
+  saveModules();
+  buildNav();
+}
+function handleDragEnd(e) { e.target.classList.remove('dragging'); dragIdx = null; }
 
 function renameModule() {
   const oldName = currentModule;
