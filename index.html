@@ -720,22 +720,45 @@ function renderModuleItems() {
   const items = allItems.filter(i => i.module === currentModule);
   const list = document.getElementById('moduleItemList');
   if (items.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">暂无内容，点右上角新建</div>';
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">暂无内容，点右上角新建</div>';
     return;
   }
   list.innerHTML = items.map(i => `
-    <div class="list-item ${stateColor(i)}">
+    <div class="list-item ${stateColor(i)}" onclick="editItem('${i.id}')">
       <div class="info">
         <div class="title">${esc(i.title)}</div>
-        <div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${i.nextReview || '-'}</div>
+        <div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${i.nextReview || '-'}  · 点击修改</div>
       </div>
     </div>
   `).join('');
 }
 
-function showAddItem() {
+let editingItemId = null;
+
+function editItem(id) {
+  const item = allItems.find(i => i.id === id);
+  if (!item) return;
+  editingItemId = id;
   switchView('add');
   document.getElementById('moduleView').classList.remove('hidden');
+  document.getElementById('addMode').value = item.mode === '概念理解' ? '概念理解' : '精确记忆';
+  document.getElementById('addTitle').value = item.title;
+  document.getElementById('addDefinition').value = item.definition || '';
+  const isEnglishModule = item.module === '英语' || item.module === '英文';
+  document.getElementById('addEngSection').classList.toggle('hidden', !isEnglishModule);
+  document.getElementById('addEngMeaning').value = item.engMeaning || '';
+  document.getElementById('addTitleLabel').textContent = isEnglishModule ? '单词 / 句子' : '标题';
+  // Change save button
+  const saveBtn = document.querySelector('#addItemView .btn-primary');
+  if (saveBtn) saveBtn.textContent = '更新';
+}
+
+function showAddItem() {
+  editingItemId = null;
+  switchView('add');
+  document.getElementById('moduleView').classList.remove('hidden');
+  const saveBtn = document.querySelector('#addItemView .btn-primary');
+  if (saveBtn) saveBtn.textContent = '保存';
   const isEnglishModule = currentModule === '英语' || currentModule === '英文';
   document.getElementById('addMode').value = isEnglishModule ? '精确记忆' : '概念理解';
   document.getElementById('addEngSection').classList.toggle('hidden', !isEnglishModule);
@@ -787,22 +810,34 @@ async function saveItem() {
     }
   }
 
-  const item = {
-    id: Date.now().toString(36),
-    module: currentModule,
-    mode,
-    title,
-    definition,
-    engMeaning,
-    createdAt: today,
-    reviewCount: 0,
-    nextReview,
-    strugglingDays: 0,
-    status: 'pending', // pending | reviewing | done
-    reviewHistory: [],
-  };
-
-  allItems.push(item);
+  if (editingItemId) {
+    // Update existing item
+    const idx = allItems.findIndex(i => i.id === editingItemId);
+    if (idx >= 0) {
+      allItems[idx].title = title;
+      allItems[idx].definition = definition;
+      allItems[idx].mode = mode;
+      allItems[idx].engMeaning = engMeaning;
+      allItems[idx].module = currentModule; // Allow changing module
+    }
+    editingItemId = null;
+  } else {
+    const item = {
+      id: Date.now().toString(36),
+      module: currentModule,
+      mode,
+      title,
+      definition,
+      engMeaning,
+      createdAt: today,
+      reviewCount: 0,
+      nextReview,
+      strugglingDays: 0,
+      status: 'pending',
+      reviewHistory: [],
+    };
+    allItems.push(item);
+  }
   saveItems();
   renderModuleItems();
   switchView('module');
