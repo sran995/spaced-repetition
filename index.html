@@ -790,14 +790,45 @@ function renderModuleItems() {
     list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">暂无内容，点右上角新建</div>';
     return;
   }
-  list.innerHTML = items.map(i => `
-    <div class="list-item ${stateColor(i)}" onclick="editItem('${i.id}')">
-      <div class="info">
-        <div class="title">${esc(i.title)}</div>
-        <div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${i.nextReview || '-'}  · 点击修改</div>
-      </div>
-    </div>
-  `).join('');
+
+  // Group by review schedule
+  const today = getToday();
+  const groups = { mastered:[], soon:[], later:[], pending:[] };
+  items.forEach(i => {
+    if (i.reviewCount >= 6) { groups.mastered.push(i); return; }
+    if (!i.nextReview) { groups.pending.push(i); return; }
+    const days = Math.ceil((new Date(i.nextReview + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+    if (days <= 0) groups.pending.push(i);
+    else if (days <= 3) groups.soon.push(i);
+    else groups.later.push(i);
+  });
+
+  const labels = {
+    pending: { title:'待复习', color:'var(--coral)', icon:'📋' },
+    soon: { title:'近期复习', color:'var(--yellow)', icon:'📅' },
+    later: { title:'后续复习', color:'var(--purple)', icon:'🗓' },
+    mastered: { title:'已掌握', color:'var(--green)', icon:'✅' },
+  };
+
+  let html = '';
+  Object.entries(groups).forEach(([key, groupItems]) => {
+    if (groupItems.length === 0) return;
+    const g = labels[key];
+    html += `<div style="font-size:12px;color:${g.color};font-weight:700;padding:16px 0 6px 4px;letter-spacing:.5px;">${g.icon} ${g.title} · ${groupItems.length}条</div>`;
+    groupItems.forEach(i => {
+      const daysUntil = i.nextReview ? Math.ceil((new Date(i.nextReview + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000) : null;
+      const nextLabel = i.reviewCount >= 6 ? '已掌握' : (daysUntil !== null && daysUntil <= 0 ? '今天' : (daysUntil !== null ? daysUntil + '天后' : '-'));
+      html += `
+        <div class="list-item ${stateColor(i)}" onclick="editItem('${i.id}')">
+          <div class="info">
+            <div class="title">${esc(i.title)}</div>
+            <div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${nextLabel} · 点击修改</div>
+          </div>
+        </div>
+      `;
+    });
+  });
+  list.innerHTML = html;
 }
 
 let editingItemId = null;
