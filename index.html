@@ -366,7 +366,7 @@ body{
 
   <!-- Add Item View -->
   <div id="addItemView" class="hidden">
-    <button class="back-btn" onclick="switchView('review')">&larr; 返回</button>
+    <button class="back-btn" onclick="backFromAdd()">&larr; 返回</button>
     <div class="form-card">
       <h3 style="margin-bottom:16px;">新建知识</h3>
       <label>模式</label>
@@ -739,8 +739,11 @@ function editItem(id) {
   const item = allItems.find(i => i.id === id);
   if (!item) return;
   editingItemId = id;
-  switchView('add');
-  document.getElementById('moduleView').classList.remove('hidden');
+  // Manually show add form + keep module visible (don't use switchView which hides module)
+  document.getElementById('reviewView').classList.add('hidden');
+  document.getElementById('answerView').classList.add('hidden');
+  document.getElementById('settingsView').classList.add('hidden');
+  document.getElementById('addItemView').classList.remove('hidden');
   document.getElementById('addMode').value = item.mode === '概念理解' ? '概念理解' : '精确记忆';
   document.getElementById('addTitle').value = item.title;
   document.getElementById('addDefinition').value = item.definition || '';
@@ -751,6 +754,16 @@ function editItem(id) {
   // Change save button
   const saveBtn = document.querySelector('#addItemView .btn-primary');
   if (saveBtn) saveBtn.textContent = '更新';
+}
+
+function backFromAdd() {
+  editingItemId = null;
+  if (currentModule) {
+    switchView('module');
+    renderModuleItems();
+  } else {
+    switchView('review');
+  }
 }
 
 function showAddItem() {
