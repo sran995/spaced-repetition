@@ -1014,10 +1014,13 @@ function getToday() {
 
 function buildReviewList() {
   const today = getToday();
+  console.log('buildReviewList called, allItems:', allItems.length, 'today:', today);
+  allItems.forEach(i => console.log('  item:', i.title, 'createdAt:', i.createdAt, 'nextReview:', i.nextReview));
   // Items due for review today
   reviewItems = allItems.filter(i => i.nextReview && i.nextReview <= today);
   // Items newly created today (first review is tomorrow, but show them here)
   const newToday = allItems.filter(i => i.createdAt === today && (!i.nextReview || i.nextReview > today));
+  console.log('reviewItems:', reviewItems.length, 'newToday:', newToday.length);
 
   const list = document.getElementById('reviewList');
   const empty = document.getElementById('reviewEmpty');
