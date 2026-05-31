@@ -442,7 +442,8 @@ body{
       <h3 style="margin-bottom:16px;">设置</h3>
       <label>AI API Key（可选，用于概念判断 + 英语翻译）</label>
       <input type="password" id="setApiKey" placeholder="sk-xxx / DeepSeek Key">
-      <div style="font-size:12px;color:var(--muted);margin:4px 0 0;">不填也能用，概念题改为手动对照，英语翻译改为手填</div>
+      <div id="keyStatus" style="font-size:12px;margin:4px 0 0;font-weight:600;"></div>
+      <div style="font-size:12px;color:var(--muted);">不填也能用，概念题改为手动对照，英语翻译改为手填</div>
       <hr style="border:none;border-top:2px solid #eee;margin:28px 0;">
       <h3 style="margin-bottom:12px;">账号管理</h3>
       <div id="accountManageList" style="margin-bottom:8px;"></div>
@@ -1191,7 +1192,11 @@ function backToList() {
 
 // ═══════════ SETTINGS ═══════════
 function loadSettings() {
-  document.getElementById('setApiKey').value = LS('apiKey') || '';
+  const key = LS('apiKey') || '';
+  document.getElementById('setApiKey').value = key;
+  // Show key status
+  const status = document.getElementById('keyStatus');
+  if (status) status.textContent = key ? 'Key 已配置 (' + key.substring(0,10) + '...)' : '未配置 Key（AI 功能关闭）';
 
   // Account management
   const accounts = loadAccounts();
