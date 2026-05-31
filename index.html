@@ -190,12 +190,6 @@ body{
 }
 .answer-screen textarea::placeholder{color:rgba(255,255,255,.4);}
 .answer-screen textarea:focus{border-color:rgba(255,255,255,.5);}
-.answer-screen .voice-btn{
-  margin-top:10px;padding:10px 20px;background:rgba(255,255,255,.15);border:none;
-  border-radius:var(--btn-radius);font-size:14px;font-weight:600;cursor:pointer;
-  display:inline-flex;align-items:center;gap:6px;color:#fff;
-}
-.answer-screen .voice-btn.recording{background:var(--coral);}
 .answer-btns{display:flex;gap:12px;margin-top:24px;}
 .answer-btns button{
   flex:1;padding:16px;border:none;border-radius:var(--btn-radius);
@@ -871,7 +865,6 @@ function renderAnswer() {
     <div class="prompt">${prompt}</div>
     ${defDisplay ? `<div class="definition">${esc(defDisplay)}</div>` : ''}
     <textarea id="answerInput" placeholder="在此输入你的回答..."></textarea>
-    <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤 语音输入</button>
     <div class="answer-btns">
       <button class="btn-forgot" onclick="submitAnswer('forgot')">忘了</button>
       <button class="btn-struggling" onclick="submitAnswer('struggling')">勉强</button>
@@ -929,41 +922,6 @@ function backToList() {
     switchView('review');
     buildReviewList();
   }
-}
-
-// ═══════════ VOICE ═══════════
-let recognition = null;
-function toggleVoice() {
-  const btn = document.getElementById('voiceBtn');
-  if (recognition && btn.classList.contains('recording')) {
-    recognition.stop();
-    return;
-  }
-
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) { alert('你的浏览器不支持语音识别'); return; }
-
-  recognition = new SpeechRecognition();
-  recognition.lang = 'zh-CN';
-  recognition.interimResults = false;
-  recognition.onresult = function(e) {
-    const text = e.results[0][0].transcript;
-    const ta = document.getElementById('answerInput');
-    if (ta) ta.value = (ta.value + ' ' + text).trim();
-    btn.classList.remove('recording');
-    btn.textContent = '🎤 语音输入';
-  };
-  recognition.onerror = function() {
-    btn.classList.remove('recording');
-    btn.textContent = '🎤 语音输入';
-  };
-  recognition.onend = function() {
-    btn.classList.remove('recording');
-    btn.textContent = '🎤 语音输入';
-  };
-  recognition.start();
-  btn.classList.add('recording');
-  btn.textContent = '🔴 录音中...';
 }
 
 // ═══════════ SETTINGS ═══════════
