@@ -16,8 +16,43 @@
 body{
   font-family:'DM Sans',-apple-system,"PingFang SC",sans-serif;
   background:var(--bg);color:var(--dark);line-height:1.5;
-  max-width:800px;margin:0 auto;padding:16px;min-height:100dvh;
+  display:flex;min-height:100dvh;
 }
+#mainScreen{display:flex;flex:1;}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:220px;min-width:220px;background:var(--white);
+  padding:24px 16px;display:flex;flex-direction:column;
+  box-shadow:0 8px 0 rgba(99,102,241,.08),0 16px 32px rgba(99,102,241,.04);
+  position:sticky;top:0;height:100dvh;overflow-y:auto;z-index:10;
+}
+.sidebar h2{font-size:16px;font-weight:800;margin-bottom:20px;padding:0 8px;letter-spacing:-.3px;}
+.sidebar .user-row{
+  padding:8px;margin-bottom:16px;cursor:pointer;font-size:13px;font-weight:600;
+  color:var(--purple);border-radius:var(--btn-radius);position:relative;
+}
+.sidebar .user-row:hover{background:rgba(99,102,241,.06);}
+.sidebar .section-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 8px 6px;font-weight:700;}
+.sidebar .nav-item{
+  display:block;width:100%;text-align:left;padding:10px 12px;border-radius:var(--btn-radius);
+  font-size:14px;font-weight:600;cursor:pointer;border:none;background:none;color:var(--dark);
+  font-family:inherit;margin-bottom:2px;transition:all .1s;
+}
+.sidebar .nav-item:hover{background:rgba(99,102,241,.06);}
+.sidebar .nav-item.active{background:var(--purple);color:#fff;}
+.sidebar .nav-item.add-module{color:var(--muted);font-size:18px;padding:6px 12px;font-weight:400;}
+.sidebar .settings-btn{margin-top:auto;}
+
+/* ── Main Content ── */
+.main-content{flex:1;padding:24px;overflow-y:auto;max-height:100dvh;}
+
+/* ── Module View Split ── */
+.module-split{display:flex;gap:20px;height:100%;}
+.module-list-panel{flex:1;min-width:0;}
+.module-edit-panel{width:380px;min-width:300px;display:none;}
+.module-edit-panel.show{display:block;}
+.module-edit-panel .form-card{margin-top:0;}
 
 /* ── Shared 3D Card ── */
 .card-3d{
@@ -273,12 +308,22 @@ body{
 #reviewEmpty{text-align:center;padding:60px 20px;color:var(--muted);}
 
 /* ── Mobile ── */
-@media(max-width:600px){
-  body{padding:10px;}
-  .login-screen h1{font-size:22px;}
-  .answer-btns button{font-size:14px;padding:14px 8px;}
-  .header h2{font-size:16px;}
-  .header{padding:14px 18px;}
+@media(max-width:700px){
+  body{flex-direction:column;}
+  #mainScreen{flex-direction:column;}
+  .sidebar{
+    width:100%;min-width:0;position:static;height:auto;max-height:none;
+    flex-direction:row;flex-wrap:wrap;padding:12px;gap:4px;align-items:center;
+  }
+  .sidebar h2{font-size:14px;margin:0 8px 0 0;padding:0;}
+  .sidebar .section-label{display:none;}
+  .sidebar .nav-item{width:auto;font-size:12px;padding:6px 12px;}
+  .sidebar .user-row{margin:0;padding:4px 8px;font-size:12px;}
+  .sidebar .settings-btn{margin:0;}
+  .sidebar .nav-item.add-module{font-size:16px;padding:4px 10px;}
+  .main-content{padding:16px;max-height:none;}
+  .module-split{flex-direction:column;}
+  .module-edit-panel{width:100%;min-width:0;}
 }
 .hidden{display:none !important;}
 </style>
@@ -319,21 +364,30 @@ body{
 
 <!-- ═══════════ MAIN ═══════════ -->
 <div id="mainScreen" class="hidden">
-  <div class="header">
-    <h2 id="headerTitle">今日复习</h2>
-    <span class="user-info" id="userMenu" onclick="toggleUserMenu()">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>今天，你复习了吗？</h2>
+    <span class="user-row" id="userMenu" onclick="toggleUserMenu()">
       <span id="currentUserLabel"></span>
       <div class="user-dropdown" id="userDropdown">
         <div onclick="switchView('settings')">设置</div>
         <div class="logout-item" onclick="logout()">退出</div>
       </div>
     </span>
+    <div class="section-label">导航</div>
+    <div id="navBar">
+      <span class="nav-item active" data-view="review" onclick="switchView('review')">今日复习</span>
+    </div>
+    <div class="section-label" style="margin-top:12px;">模块</div>
+    <div id="moduleNav"></div>
+    <div class="settings-btn">
+      <span class="nav-item" onclick="switchView('settings')">设置</span>
+      <span class="nav-item logout-item" onclick="logout()" style="color:var(--coral);">退出</span>
+    </div>
   </div>
 
-  <!-- Navigation -->
-  <div class="nav" id="navBar">
-    <span class="nav-item active" data-view="review" onclick="switchView('review')">今日复习</span>
-  </div>
+  <!-- Main Content -->
+  <div class="main-content">
 
   <!-- Review List -->
   <div id="reviewView">
@@ -410,7 +464,8 @@ body{
       <div class="saved" id="settingsSaved"></div>
     </div>
   </div>
-</div>
+  </div><!-- /main-content -->
+</div><!-- /mainScreen -->
 
 <script>
 // ═══════════ STATE ═══════════
@@ -630,17 +685,16 @@ function saveItems() {
 
 // ═══════════ NAVIGATION ═══════════
 function buildNav() {
-  const nav = document.getElementById('navBar');
-  let html = '<span class="nav-item active" data-view="review" onclick="switchView(\'review\')">今日复习</span>';
+  const modNav = document.getElementById('moduleNav');
+  let html = '';
   modules.forEach(m => {
-    html += `<span class="nav-item" data-view="module" data-module="${m.name}" onclick="switchView(\'review\');openModule(\'${m.name}\')">${m.name}</span>`;
+    html += `<span class="nav-item" data-view="module" data-module="${m.name}" onclick="openModule('${m.name}')">${m.name}</span>`;
   });
-  // Gray placeholder: becomes first module, or "+" when modules exist
   if (modules.length === 0) {
-    html += '<span class="nav-item" style="color:var(--text2);opacity:.6;" onclick="addModule()">模块</span>';
+    html += '<span class="nav-item" style="color:var(--muted);opacity:.6;" onclick="addModule()">+ 模块</span>';
   }
-  html += '<span class="nav-item" style="font-size:18px;padding:4px 10px;font-weight:400;" onclick="addModule()" title="新建模块">+</span>';
-  nav.innerHTML = html;
+  html += '<span class="nav-item add-module" onclick="addModule()" title="新建模块">+</span>';
+  modNav.innerHTML = html;
 }
 
 function renameModule() {
