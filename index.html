@@ -764,7 +764,8 @@ async function saveItem() {
       if (apiKey) {
         try {
           engMeaning = await autoTranslate(title, apiKey);
-        } catch { engMeaning = ''; }
+          if (!engMeaning) alert('翻译失败，请检查 API Key 是否正确（设置页可查看）');
+        } catch { alert('翻译出错，请检查网络或 API Key'); }
       }
     }
   }
@@ -945,9 +946,14 @@ function loadSettings() {
 }
 
 function saveSettings() {
-  LSS('apiKey', document.getElementById('setApiKey').value.trim());
-  document.getElementById('settingsSaved').textContent = '已保存 ✓';
-  setTimeout(() => document.getElementById('settingsSaved').textContent = '', 2000);
+  const key = document.getElementById('setApiKey').value.trim();
+  LSS('apiKey', key);
+  if (key) {
+    document.getElementById('settingsSaved').textContent = '已保存 ✓ (Key: ' + key.substring(0,8) + '...)';
+  } else {
+    document.getElementById('settingsSaved').textContent = '已保存 ✓ (未填 Key，AI 功能关闭)';
+  }
+  setTimeout(() => document.getElementById('settingsSaved').textContent = '', 3000);
 }
 
 function exportData() {
@@ -1033,20 +1039,26 @@ function statusEmoji(i) {
 }
 
 async function autoTranslate(text, apiKey) {
-  const resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [{ role: 'user', content: `将以下英文翻译成简洁的中文，只返回翻译结果，不要解释：\n\n${text}` }],
-      max_tokens: 200,
-    })
-  });
-  const d = await resp.json();
-  if (d.choices && d.choices[0]) {
-    return d.choices[0].message.content.trim();
+  try {
+    const resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: `将以下英文翻译成简洁的中文，只返回翻译结果，不要解释：\n\n${text}` }],
+        max_tokens: 200,
+      })
+    });
+    const d = await resp.json();
+    if (d.choices && d.choices[0]) {
+      return d.choices[0].message.content.trim();
+    }
+    console.error('DeepSeek API 返回异常:', JSON.stringify(d));
+    return '';
+  } catch (e) {
+    console.error('DeepSeek API 调用失败:', e.message);
+    return '';
   }
-  return '';
 }
 
 // ═══════════ INIT ═══════════
