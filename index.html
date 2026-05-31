@@ -743,6 +743,23 @@ function showAddItem() {
   document.getElementById('addDefinition').value = '';
   document.getElementById('addEngMeaning').value = '';
   document.getElementById('addTitleLabel').textContent = isEnglishModule ? '单词 / 句子' : '标题';
+  // Auto-translate on blur for English module
+  const titleInput = document.getElementById('addTitle');
+  titleInput.onblur = null;
+  if (isEnglishModule) {
+    titleInput.onblur = async function() {
+      const word = titleInput.value.trim();
+      if (!word) return;
+      const apiKey = LS('apiKey');
+      if (!apiKey) return;
+      const meaningInput = document.getElementById('addEngMeaning');
+      if (meaningInput.value.trim()) return; // Already has manual input
+      meaningInput.value = '翻译中...';
+      const result = await autoTranslate(word, apiKey);
+      meaningInput.value = result || '';
+      if (!result) alert('翻译失败，请检查 API Key');
+    };
+  }
 }
 
 async function saveItem() {
