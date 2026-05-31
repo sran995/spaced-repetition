@@ -918,7 +918,9 @@ function renderAnswer() {
     <div class="prompt">${prompt}</div>
     ${defDisplay ? `<div class="definition">${esc(defDisplay)}</div>` : ''}
     <textarea id="answerInput" placeholder="在此输入你的回答..."></textarea>
-    <div class="answer-btns">
+    <div id="aiJudgment" style="margin:12px 0;padding:12px 16px;border-radius:var(--btn-radius);background:rgba(255,255,255,.1);display:none;font-size:14px;line-height:1.6;"></div>
+    <button class="btn-primary" onclick="checkAnswer()" style="width:100%;margin-top:12px;">提交</button>
+    <div class="answer-btns hidden" id="answerBtns">
       <button class="btn-forgot" onclick="submitAnswer('forgot')">忘了</button>
       <button class="btn-struggling" onclick="submitAnswer('struggling')">勉强</button>
       <button class="btn-remember" onclick="submitAnswer('remember')">记得</button>
@@ -930,6 +932,113 @@ function renderAnswer() {
     const ta = document.getElementById('answerInput');
     ta.placeholder = '写下你对上面概念的理解...';
   }
+}
+
+async function checkAnswer() {
+  const i = answeringItem;
+  if (!i) return;
+  const answer = document.getElementById('answerInput')?.value?.trim() || '';
+  if (!answer) return alert('请先输入你的回答');
+
+  const judgment = document.getElementById('aiJudgment');
+  const btns = document.getElementById('answerBtns');
+  judgment.style.display = 'block';
+  judgment.textContent = '判断中...';
+
+  const isEnglishModule = i.module === '英语' || i.module === '英文';
+  const isENtoCN = isEnglishModule && i.reviewCount % 2 === 1;
+
+  if (isEnglishModule && !isENtoCN) {
+    // CN→EN spelling: exact comparison
+    const correct = i.title.trim().toLowerCase();
+    const userAnswer = answer.trim().toLowerCase();
+    if (userAnswer === correct) {
+      judgment.innerHTML = '✅ <b>拼写完全正确！</b>';
+      judgment.style.background = 'rgba(74,222,128,.2)';
+    } else {
+      judgment.innerHTML = '❌ <b>拼写有误</b><br>你的：' + esc(answer) + '<br>正确：' + esc(i.title);
+      judgment.style.background = 'rgba(255,107,107,.2)';
+    }
+  } else if (isEnglishModule && isENtoCN) {
+    // EN→CN translation: AI semantic judgment
+    const apiKey = LS('apiKey');
+    if (apiKey) {
+      try {
+        const correctMeaning = i.engMeaning || i.definition;
+        const result = await judgeSemantic(i.title, correctMeaning, answer, apiKey);
+        if (result.correct) {
+          judgment.innerHTML = '✅ <b>AI 判断：翻译正确</b><br>参考释义：' + esc(correctMeaning);
+          judgment.style.background = 'rgba(74,222,128,.2)';
+        } else {
+          judgment.innerHTML = '❌ <b>AI 判断：翻译有偏差</b><br>参考释义：' + esc(correctMeaning) + '<br>' + (result.reason || '');
+          judgment.style.background = 'rgba(255,107,107,.2)';
+        }
+      } catch {
+        judgment.innerHTML = '⚠️ AI 判断失败，请自行对照<br>参考释义：' + esc(i.engMeaning || i.definition);
+        judgment.style.background = 'rgba(255,230,109,.2)';
+      }
+    } else {
+      judgment.innerHTML = '参考释义：' + esc(i.engMeaning || i.definition) + '<br>（配置 API Key 可启用 AI 自动判断）';
+      judgment.style.background = 'rgba(255,255,255,.08)';
+    }
+  } else if (i.mode === '概念理解') {
+    // Concept: AI semantic judgment
+    const apiKey = LS('apiKey');
+    if (apiKey) {
+      try {
+        const result = await judgeSemantic(i.title, i.definition, answer, apiKey);
+        if (result.correct) {
+          judgment.innerHTML = '✅ <b>AI 判断：理解正确</b>';
+          judgment.style.background = 'rgba(74,222,128,.2)';
+        } else {
+          judgment.innerHTML = '❌ <b>AI 判断：理解有偏差</b><br>' + (result.reason || '');
+          judgment.style.background = 'rgba(255,107,107,.2)';
+        }
+      } catch {
+        judgment.innerHTML = '⚠️ AI 判断失败，请自行对照';
+        judgment.style.background = 'rgba(255,230,109,.2)';
+      }
+    } else {
+      const def = i.definition;
+      judgment.innerHTML = '<b>原始定义：</b>' + esc(def) + '<br>（配置 API Key 可启用 AI 自动判断）';
+      judgment.style.background = 'rgba(255,255,255,.08)';
+    }
+  } else {
+    // 精确记忆：exact comparison
+    const correct = (i.definition || i.title).trim();
+    const userAnswer = answer.trim();
+    if (userAnswer === correct) {
+      judgment.innerHTML = '✅ <b>完全正确！</b>';
+      judgment.style.background = 'rgba(74,222,128,.2)';
+    } else {
+      judgment.innerHTML = '❌ <b>答案有误</b><br>你的：' + esc(answer) + '<br>正确：' + esc(correct);
+      judgment.style.background = 'rgba(255,107,107,.2)';
+    }
+  }
+
+  btns.classList.remove('hidden');
+  // Hide submit button
+  document.querySelector('#answerContent .btn-primary').style.display = 'none';
+}
+
+async function judgeSemantic(title, correctAnswer, userAnswer, apiKey) {
+  const resp = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model: 'deepseek-chat',
+      messages: [{ role: 'user', content: `判断用户的回答是否正确。只需要判断核心意思是否一致，不需要逐字匹配。\n\n题目：${title}\n参考答案：${correctAnswer}\n用户回答：${userAnswer}\n\n请用JSON格式回复：{"correct": true或false, "reason": "简短理由（20字以内）"}` }],
+      max_tokens: 100,
+    })
+  });
+  const d = await resp.json();
+  if (d.choices && d.choices[0]) {
+    const text = d.choices[0].message.content.trim();
+    try { return JSON.parse(text); } catch {
+      return { correct: text.includes('true'), reason: text };
+    }
+  }
+  return { correct: false, reason: 'AI 判断超时' };
 }
 
 function submitAnswer(level) {
