@@ -750,6 +750,13 @@ function openModule(name) {
   document.getElementById('addItemView').classList.add('hidden');
   document.getElementById('answerView').classList.add('hidden');
   document.getElementById('settingsView').classList.add('hidden');
+  document.getElementById('moduleEditPanel').classList.remove('show');
+  editingItemId = null;
+  // Highlight active module in sidebar
+  document.querySelectorAll('#moduleNav .nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.module === name);
+  });
+  document.querySelectorAll('#navBar .nav-item').forEach(el => el.classList.remove('active'));
   renderModuleItems();
 }
 
@@ -763,9 +770,10 @@ function switchView(view) {
   document.getElementById('settingsView').classList.toggle('hidden', view !== 'settings');
 
   // Update nav active
-  document.querySelectorAll('.nav-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.view === view || (view === 'module' && el.dataset.module === currentModule));
-  });
+  if (view === 'review') {
+    document.querySelectorAll('#navBar .nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === 'review'));
+    document.querySelectorAll('#moduleNav .nav-item').forEach(el => el.classList.remove('active'));
+  }
 
   document.getElementById('headerTitle').textContent =
     view === 'settings' ? '设置' :
