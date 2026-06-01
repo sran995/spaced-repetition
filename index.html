@@ -848,7 +848,8 @@ function renderModuleItems() {
       const hidden = idx >= showCount && key !== 'pending' ? 'style="display:none"' : '';
       const daysUntil = i.nextReview ? Math.ceil((new Date(i.nextReview + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000) : null;
       const nextLabel = i.reviewCount >= 6 ? '已掌握' : (daysUntil !== null && daysUntil <= 0 ? '今天' : (daysUntil !== null ? daysUntil + '天后' : '-'));
-      html += `<div class="list-item expandable ${key} ${stateColor(i)}" ${hidden} onclick="editItem('${i.id}')"><div class="info"><div class="title">${esc(i.title)}</div><div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${nextLabel} · 点击修改</div></div></div>`;
+      const reviewNow = (key === 'pending') ? `<button class="btn-primary" style="padding:6px 14px;font-size:12px;margin-left:8px;flex-shrink:0;" onclick="event.stopPropagation();startReview('${i.id}')">复习</button>` : '';
+      html += `<div class="list-item expandable ${key} ${stateColor(i)}" ${hidden} onclick="editItem('${i.id}')"><div class="info"><div class="title">${esc(i.title)}</div><div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${nextLabel} · 点击修改</div></div>${reviewNow}</div>`;
     });
     html += '</details>';
   });
