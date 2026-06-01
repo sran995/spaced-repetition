@@ -838,25 +838,32 @@ function renderModuleItems() {
     mastered: { title:'已掌握', color:'#10B981', icon:'🌟' },
   };
 
-  let html = '';
+  let html = '<style>.group-summary{font-size:12px;font-weight:700;padding:14px 4px 8px;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;gap:4px;list-style:none;}.group-summary::-webkit-details-marker{display:none;}.group-summary::before{content:"▸";font-size:10px;transition:transform .2s;width:14px;display:inline-block;}details[open]>.group-summary::before{transform:rotate(90deg);}</style>';
   Object.entries(groups).forEach(([key, groupItems]) => {
     if (groupItems.length === 0) return;
     const g = labels[key];
-    html += `<div style="font-size:12px;color:${g.color};font-weight:700;padding:16px 0 6px 4px;letter-spacing:.5px;">${g.icon} ${g.title} · ${groupItems.length}条</div>`;
-    groupItems.forEach(i => {
+    const showCount = Math.min(2, groupItems.length);
+    html += `<details ${key==='pending'?'open':''}><summary class="group-summary" style="color:${g.color}">${g.icon} ${g.title} · ${groupItems.length}条</summary>`;
+    groupItems.forEach((i, idx) => {
+      const hidden = idx >= showCount && key !== 'pending' ? 'style="display:none"' : '';
       const daysUntil = i.nextReview ? Math.ceil((new Date(i.nextReview + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000) : null;
       const nextLabel = i.reviewCount >= 6 ? '已掌握' : (daysUntil !== null && daysUntil <= 0 ? '今天' : (daysUntil !== null ? daysUntil + '天后' : '-'));
-      html += `
-        <div class="list-item ${stateColor(i)}" onclick="editItem('${i.id}')">
-          <div class="info">
-            <div class="title">${esc(i.title)}</div>
-            <div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${nextLabel} · 点击修改</div>
-          </div>
-        </div>
-      `;
+      html += `<div class="list-item expandable ${key} ${stateColor(i)}" ${hidden} onclick="editItem('${i.id}')"><div class="info"><div class="title">${esc(i.title)}</div><div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${nextLabel} · 点击修改</div></div></div>`;
     });
+    html += '</details>';
   });
   list.innerHTML = html;
+  // Expand all when details opened
+  list.querySelectorAll('details').forEach(d => {
+    d.addEventListener('toggle', function() {
+      if (this.open) {
+        this.querySelectorAll('.expandable').forEach(el => el.style.display = '');
+      } else {
+        const items = this.querySelectorAll('.expandable');
+        items.forEach((el, i) => { if (i >= 2) el.style.display = 'none'; });
+      }
+    });
+  });
 }
 
 let editingItemId = null;
@@ -1017,55 +1024,30 @@ function buildReviewList() {
   const list = document.getElementById('reviewList');
   const empty = document.getElementById('reviewEmpty');
 
+  // Items due for review (nextReview <= today)
   reviewItems = allItems.filter(i => i.nextReview && i.nextReview <= today);
-  const newToday = allItems.filter(i => i.createdAt === today && (!i.nextReview || i.nextReview > today));
+  // Items created today that haven't been reviewed yet
+  const newToday = allItems.filter(i => i.createdAt === today);
 
-  if (reviewItems.length === 0 && newToday.length === 0) {
-    list.innerHTML = `<div style="text-align:center;margin-top:30px;font-size:12px;color:var(--muted);">
-      共${allItems.length}条 · 今日${today}<br>
-      ${allItems.map(i=>i.title+':'+i.createdAt+'→'+i.nextReview).join('<br>')}</div>`;
+  const total = reviewItems.length + newToday.length;
+  if (total === 0) {
+    list.innerHTML = '';
     empty.classList.remove('hidden');
     return;
   }
   empty.classList.add('hidden');
 
   let html = '';
-
-  // New today section
-  if (newToday.length > 0) {
-    html += '<div style="font-size:12px;color:#8B5CF6;font-weight:700;padding:4px 4px 8px;letter-spacing:.5px;">✨ 今天新学 · ' + newToday.length + '条</div>';
-    newToday.forEach(i => {
-      html += `
-        <div class="list-item state-default" onclick="startReview('${i.id}')">
-          <div class="info">
-            <div class="title">${esc(i.title)}</div>
-            <div class="meta">${i.mode} · 首次复习明天 · ${i.module}</div>
-          </div>
-        </div>
-      `;
+  if (reviewItems.length > 0) {
+    html += '<div style="font-size:12px;color:#EF4444;font-weight:700;padding:4px 4px 8px;letter-spacing:.5px;">❗️ 待复习 · ' + reviewItems.length + '条</div>';
+    reviewItems.forEach(i => {
+      html += `<div class="list-item ${stateColor(i)}" onclick="startReview('${i.id}')"><div class="info"><div class="title">${esc(i.title)}</div><div class="meta">${i.mode} · 第 ${i.reviewCount + 1} 次复习 · ${i.module}</div></div></div>`;
     });
   }
-
-  // Due for review
-  if (reviewItems.length > 0) {
-    html += '<div style="font-size:12px;color:#EF4444;font-weight:700;padding:16px 4px 8px;letter-spacing:.5px;">❗️ 待复习 · ' + reviewItems.length + '条</div>';
-    const groups = {};
-    reviewItems.forEach(i => {
-      if (!groups[i.module]) groups[i.module] = [];
-      groups[i.module].push(i);
-    });
-    Object.keys(groups).forEach(mod => {
-      groups[mod].forEach(i => {
-        html += `
-          <div class="list-item ${stateColor(i)}" onclick="startReview('${i.id}')">
-            <div class="info">
-              <div class="title">${esc(i.title)}</div>
-              <div class="meta">${i.mode} · 第 ${i.reviewCount + 1} 次复习 · ${i.module}</div>
-            </div>
-            <div class="score">${statusEmoji(i)}</div>
-          </div>
-        `;
-      });
+  if (newToday.length > 0) {
+    html += '<div style="font-size:12px;color:#8B5CF6;font-weight:700;padding:12px 4px 8px;letter-spacing:.5px;">✨ 今天新学 · ' + newToday.length + '条</div>';
+    newToday.forEach(i => {
+      html += `<div class="list-item state-default" onclick="startReview('${i.id}')"><div class="info"><div class="title">${esc(i.title)}</div><div class="meta">${i.mode} · 首次复习明天 · ${i.module}</div></div></div>`;
     });
   }
   list.innerHTML = html;
