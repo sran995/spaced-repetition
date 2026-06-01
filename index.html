@@ -305,7 +305,6 @@ body{
 .module-header h3{font-size:18px;font-weight:800;}
 
 /* ── Empty State ── */
-#reviewEmpty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60dvh;text-align:center;color:var(--muted);}
 
 /* ── Mobile ── */
 @media(max-width:700px){
@@ -372,11 +371,7 @@ body{
       <span class="greeting-user" id="currentUserLabel"></span>
       <h2>今天，你复习了吗？</h2>
     </div>
-    <div class="section-label">导航</div>
-    <div id="navBar">
-      <span class="nav-item active" data-view="review" onclick="switchView('review')">今日复习</span>
-    </div>
-    <div class="section-label" style="margin-top:12px;">模块</div>
+    <div class="section-label">模块</div>
     <div id="moduleNav"></div>
     <div class="settings-btn">
       <span class="nav-item" onclick="switchView('settings')">设置</span>
@@ -386,16 +381,6 @@ body{
 
   <!-- Main Content -->
   <div class="main-content">
-
-  <!-- Review List -->
-  <div id="reviewView">
-    <div class="list" id="reviewList"></div>
-    <div id="reviewEmpty">
-      <div style="font-size:48px;margin-bottom:12px;">&#9749;</div>
-      <div>今天没有待复习的内容</div>
-      <div style="font-size:13px;margin-top:4px;">去新建一些知识吧</div>
-    </div>
-  </div>
 
   <!-- Module View -->
   <div id="moduleView" class="hidden">
@@ -487,7 +472,6 @@ let currentModule = null;
 let currentView = 'review';
 let modules = [];
 let allItems = [];
-let reviewItems = [];
 let answeringItem = null;
 
 // ═══════════ API ═══════════
@@ -652,7 +636,6 @@ function logout() {
   currentAccount = null;
   currentModule = null;
   allItems = [];
-  reviewItems = [];
   document.getElementById('mainScreen').classList.add('hidden');
   document.getElementById('loginScreen').classList.remove('hidden');
   initLogin();
@@ -663,7 +646,9 @@ function loadMainData() {
   loadModules();
   loadItems();
   buildNav();
-  switchView('review');
+  if (modules.length > 0) {
+    openModule(modules[0].name);
+  }
 }
 
 function loadModules() {
@@ -771,42 +756,25 @@ function addModule() {
 function openModule(name) {
   currentModule = name;
   document.getElementById('moduleTitle').textContent = name;
-  document.getElementById('reviewView').classList.add('hidden');
   document.getElementById('moduleView').classList.remove('hidden');
   document.getElementById('addItemView').classList.add('hidden');
   document.getElementById('answerView').classList.add('hidden');
   document.getElementById('settingsView').classList.add('hidden');
   document.getElementById('moduleEditPanel').classList.remove('show');
   editingItemId = null;
-  // Highlight active module in sidebar
   document.querySelectorAll('#moduleNav .nav-item').forEach(el => {
     el.classList.toggle('active', el.dataset.module === name);
   });
-  document.querySelectorAll('#navBar .nav-item').forEach(el => el.classList.remove('active'));
   renderModuleItems();
 }
 
 function switchView(view) {
   currentView = view;
-  document.getElementById('reviewView').classList.toggle('hidden', view !== 'review');
   document.getElementById('moduleView').classList.toggle('hidden', view !== 'module');
   document.getElementById('addItemView').classList.toggle('hidden', view !== 'add');
   document.getElementById('answerView').classList.toggle('hidden', view !== 'answer');
   document.getElementById('settingsView').classList.toggle('hidden', view !== 'settings');
 
-  // Update nav active
-  if (view === 'review') {
-    document.querySelectorAll('#navBar .nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === 'review'));
-    document.querySelectorAll('#moduleNav .nav-item').forEach(el => el.classList.remove('active'));
-  }
-
-  document.getElementById('headerTitle').textContent =
-    view === 'settings' ? '设置' :
-    view === 'add' ? '新建知识' :
-    view === 'module' ? currentModule || '' :
-    '今日复习';
-
-  if (view === 'review') { currentModule = null; buildReviewList(); }
   if (view === 'settings') loadSettings();
 }
 
@@ -848,8 +816,10 @@ function renderModuleItems() {
       const hidden = idx >= showCount && key !== 'pending' ? 'style="display:none"' : '';
       const daysUntil = i.nextReview ? Math.ceil((new Date(i.nextReview + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000) : null;
       const nextLabel = i.reviewCount >= 6 ? '已掌握' : (daysUntil !== null && daysUntil <= 0 ? '今天' : (daysUntil !== null ? daysUntil + '天后' : '-'));
-      const reviewNow = (key === 'pending') ? `<button class="btn-primary" style="padding:6px 14px;font-size:12px;margin-left:8px;flex-shrink:0;" onclick="event.stopPropagation();startReview('${i.id}')">复习</button>` : '';
-      html += `<div class="list-item expandable ${key} ${stateColor(i)}" ${hidden} onclick="editItem('${i.id}')"><div class="info"><div class="title">${esc(i.title)}</div><div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${nextLabel} · 点击修改</div></div>${reviewNow}</div>`;
+      const btns = (key === 'pending')
+        ? `<div style="display:flex;gap:6px;flex-shrink:0;"><button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="event.stopPropagation();startReview('${i.id}')">复习</button><button style="padding:6px 12px;font-size:12px;border:1px solid #ddd;border-radius:var(--btn-radius);background:var(--white);cursor:pointer;font-weight:600;color:var(--dark);font-family:inherit;" onclick="event.stopPropagation();editItem('${i.id}')">修改</button></div>`
+        : '';
+      html += `<div class="list-item expandable ${key} ${stateColor(i)}" ${hidden} onclick="editItem('${i.id}')"><div class="info"><div class="title">${esc(i.title)}</div><div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${nextLabel}</div></div>${btns}</div>`;
     });
     html += '</details>';
   });
@@ -1018,40 +988,6 @@ async function saveItem() {
 function getToday() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
-
-function buildReviewList() {
-  const today = getToday();
-  const list = document.getElementById('reviewList');
-  const empty = document.getElementById('reviewEmpty');
-
-  // Items due for review (nextReview <= today)
-  reviewItems = allItems.filter(i => i.nextReview && i.nextReview <= today);
-  // Items created today that haven't been reviewed yet
-  const newToday = allItems.filter(i => i.createdAt === today);
-
-  const total = reviewItems.length + newToday.length;
-  if (total === 0) {
-    list.innerHTML = '';
-    empty.classList.remove('hidden');
-    return;
-  }
-  empty.classList.add('hidden');
-
-  let html = '';
-  if (reviewItems.length > 0) {
-    html += '<div style="font-size:12px;color:#EF4444;font-weight:700;padding:4px 4px 8px;letter-spacing:.5px;">❗️ 待复习 · ' + reviewItems.length + '条</div>';
-    reviewItems.forEach(i => {
-      html += `<div class="list-item ${stateColor(i)}" onclick="startReview('${i.id}')"><div class="info"><div class="title">${esc(i.title)}</div><div class="meta">${i.mode} · 第 ${i.reviewCount + 1} 次复习 · ${i.module}</div></div></div>`;
-    });
-  }
-  if (newToday.length > 0) {
-    html += '<div style="font-size:12px;color:#8B5CF6;font-weight:700;padding:12px 4px 8px;letter-spacing:.5px;">✨ 今天新学 · ' + newToday.length + '条</div>';
-    newToday.forEach(i => {
-      html += `<div class="list-item state-default" onclick="startReview('${i.id}')"><div class="info"><div class="title">${esc(i.title)}</div><div class="meta">${i.mode} · 首次复习明天 · ${i.module}</div></div></div>`;
-    });
-  }
-  list.innerHTML = html;
 }
 
 function startReview(id) {
@@ -1248,9 +1184,6 @@ function backToList() {
   if (currentModule) {
     switchView('module');
     renderModuleItems();
-  } else {
-    switchView('review');
-    buildReviewList();
   }
 }
 
