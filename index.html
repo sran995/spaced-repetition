@@ -803,7 +803,7 @@ function renderModuleItems() {
     pending: { title:'今天复习', color:'#EF4444', icon:'❗️' },
     soon: { title:'近期复习', color:'#F59E0B', icon:'💪' },
     later: { title:'后续复习', color:'#6366F1', icon:'📌' },
-    mastered: { title:'已掌握', color:'#10B981', icon:'🌟' },
+    mastered: { title:'哇哦学会', color:'#10B981', icon:'🌟' },
   };
 
   let html = '<style>.group-summary{font-size:12px;font-weight:700;padding:14px 4px 8px;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;gap:4px;list-style:none;}.group-summary::-webkit-details-marker{display:none;}.group-summary::before{content:"▸";font-size:10px;transition:transform .2s;width:14px;display:inline-block;}details[open]>.group-summary::before{transform:rotate(90deg);}</style>';
@@ -815,7 +815,7 @@ function renderModuleItems() {
     groupItems.forEach((i, idx) => {
       const hidden = idx >= showCount && key !== 'pending' ? 'style="display:none"' : '';
       const daysUntil = i.nextReview ? Math.ceil((new Date(i.nextReview + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000) : null;
-      const nextLabel = i.reviewCount >= 6 ? '已掌握' : (daysUntil !== null && daysUntil <= 0 ? '今天' : (daysUntil !== null ? daysUntil + '天后' : '-'));
+      const nextLabel = i.reviewCount >= 6 ? '哇哦学会' : (daysUntil !== null && daysUntil <= 0 ? '今天' : (daysUntil !== null ? daysUntil + '天后' : '-'));
       const reviewBtn = (key === 'pending')
         ? `<button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="event.stopPropagation();startReview('${i.id}')">复习</button>`
         : '';
