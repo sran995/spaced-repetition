@@ -821,7 +821,7 @@ function renderModuleItems() {
         : '';
       const editBtn = `<button style="padding:6px 12px;font-size:12px;border:1px solid #ddd;border-radius:var(--btn-radius);background:var(--white);cursor:pointer;font-weight:600;color:var(--dark);font-family:inherit;" onclick="event.stopPropagation();editItem('${i.id}')">修改</button>`;
       const btns = `<div style="display:flex;gap:6px;flex-shrink:0;">${reviewBtn}${editBtn}</div>`;
-      html += `<div class="list-item expandable ${key} ${stateColor(i)}" ${hidden}><div class="info"><div class="title">${esc(i.title)}</div><div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${nextLabel}</div></div>${btns}</div>`;
+      html += `<div class="list-item expandable ${key} ${stateColor(i)}" ${hidden} onclick="startReview('${i.id}')"><div class="info"><div class="title">${esc(i.title)}</div><div class="meta">${i.mode} · ${statusLabel(i)} · 下次 ${nextLabel}</div></div>${btns}</div>`;
     });
     html += '</details>';
   });
